@@ -19,7 +19,7 @@ A **specification** (spec) is a document that describes:
 
 ---
 
-# 🎪 Why User Stories & Acceptance Scenarios?
+# 🎪 Why User Stories & Acceptance Scenarios? (1/2)
 
 ### The Problem with Traditional Requirements:
 
@@ -33,6 +33,10 @@ A **specification** (spec) is a document that describes:
 
 ✅ **Acceptance Scenario**: "Given..., When..., Then..."  
 - Clear **how to test**
+
+---
+
+# 🎪 Why User Stories & Acceptance Scenarios? (2/2)
 
 ### Benefits:
 
