@@ -231,39 +231,39 @@
 
 ### Step 1: Protobuf (Design) 📝
 
-- [ ] T160 [P] [US3] Define Share message in `api/proto/v1/share.proto`: id, media_id, album_id, owner_id, shared_with_user_id, shared_with_email, created_at
-- [ ] T161 [P] [US3] Define share requests/responses in `api/proto/v1/share.proto`: ShareMediaRequest, ShareAlbumRequest, RevokeShareRequest, ListMediaSharesRequest, ListSharedWithMeRequest
-- [ ] T162 [US3] Add validation rules to share.proto (recipient emails 1-10, email format), run `make proto`, commit generated code
+- [X] T160 [P] [US3] Define Share message in `api/proto/v1/share.proto`: id, media_id, album_id, owner_id, shared_with_user_id, shared_with_email, created_at
+- [X] T161 [P] [US3] Define share requests/responses in `api/proto/v1/share.proto`: ShareMediaRequest, ShareAlbumRequest, RevokeShareRequest, ListMediaSharesRequest, ListSharedWithMeRequest
+- [X] T162 [US3] Add validation rules to share.proto (recipient emails 1-10, email format), run `make proto`, commit generated code
 
 ### Step 2: Tests (Red) 🔴
 
-- [ ] T165 [P] [US3] Create Share fixture in `testutil/fixtures.go`: `CreateTestShare()` with media/album variants
-- [ ] T166 [US3] Write test for US3-AS1 (share media) in `handlers/share_handler_test.go`: Share photo with user email → recipient sees in "Shared with me"
-- [ ] T167 [US3] Write test for US3-AS2 (revoke share) in `handlers/share_handler_test.go`: Stop sharing → recipient loses access
-- [ ] T168 [US3] Write test for US3-AS3 (view only) in `handlers/share_handler_test.go`: Recipient views shared media → cannot delete or modify
-- [ ] T169 [US3] Write test for US3-AS4 (multiple recipients) in `handlers/share_handler_test.go`: Share with 5 emails → all receive access
-- [ ] T170 [US3] Add edge case tests: Invalid email, user not found, share with self, duplicate share, album sharing with future items, access after delete
-- [ ] T171 [US3] **RUN TESTS** - Verify all FAIL (red) ❌
+- [X] T165 [P] [US3] Create Share fixture in `testutil/fixtures.go`: `CreateTestShare()` with media/album variants
+- [X] T166 [US3] Write test for US3-AS1 (share media) in `handlers/share_handler_test.go`: Share photo with user email → recipient sees in "Shared with me"
+- [X] T167 [US3] Write test for US3-AS2 (revoke share) in `handlers/share_handler_test.go`: Stop sharing → recipient loses access
+- [X] T168 [US3] Write test for US3-AS3 (view only) in `handlers/share_handler_test.go`: Recipient views shared media → cannot delete or modify
+- [X] T169 [US3] Write test for US3-AS4 (multiple recipients) in `handlers/share_handler_test.go`: Share with 5 emails → all receive access
+- [X] T170 [US3] Add edge case tests: Invalid email, user not found, share with self, duplicate share, album sharing with future items, access after delete
+- [X] T171 [US3] **RUN TESTS** - Verify all FAIL (red) ❌
 
 ### Step 3: Implementation (Green) 🟢
 
-- [ ] T175 [P] [US3] Create Share model in `internal/models/share.go`: ID, MediaID (nullable), AlbumID (nullable), OwnerID, SharedWithUserID, CreatedAt with XOR validation hook
-- [ ] T176 [P] [US3] Add share errors to `services/errors.go`: `ErrShareNotFound`, `ErrCannotShareWithSelf`, `ErrUserNotFound`, `ErrAlreadyShared`
-- [ ] T177 [P] [US3] Add share HTTP codes to `handlers/error_codes.go`
-- [ ] T178 [US3] Implement ShareService in `services/share_service.go`: ShareMedia(), ShareAlbum(), RevokeShare(), ListMediaShares(), ListSharedWithMe(), ListSharedAlbums() with email lookup
-- [ ] T179 [US3] Implement ShareHandler in `handlers/share_handler.go`: ShareMedia, ShareAlbum, RevokeShare, ListMediaShares, ListSharedWithMe
-- [ ] T180 [US3] Update MediaService access control: Check owner OR shared_with in List() and Get()
-- [ ] T181 [US3] Update AlbumService access control: Check owner OR shared_with for album contents
-- [ ] T182 [US3] Add share routes to `handlers/routes.go`: POST /shares/media, POST /shares/album, DELETE /shares/{id}, GET /media/shared, GET /albums/shared
-- [ ] T183 [US3] Update `services/migrations.go`: Add Share
-- [ ] T184 [US3] Add OpenTracing spans
-- [ ] T185 [US3] **RUN TESTS** - Verify all PASS (green) ✅
+- [X] T175 [P] [US3] Create Share model in `internal/models/share.go`: ID, MediaID (nullable), AlbumID (nullable), OwnerID, SharedWithUserID, CreatedAt with XOR validation hook
+- [X] T176 [P] [US3] Add share errors to `services/errors.go`: `ErrShareNotFound`, `ErrCannotShareWithSelf`, `ErrUserNotFound`, `ErrAlreadyShared`
+- [X] T177 [P] [US3] Add share HTTP codes to `handlers/error_codes.go`
+- [X] T178 [US3] Implement ShareService in `services/share_service.go`: ShareMedia(), ShareAlbum(), RevokeShare(), ListMediaShares(), ListSharedWithMe(), ListSharedAlbums() with email lookup
+- [X] T179 [US3] Implement ShareHandler in `handlers/share_handler.go`: ShareMedia, ShareAlbum, RevokeShare, ListMediaShares, ListSharedWithMe
+- [X] T180 [US3] Update MediaService access control: Check owner OR shared_with in List() and Get()
+- [X] T181 [US3] Update AlbumService access control: Check owner OR shared_with for album contents
+- [X] T182 [US3] Add share routes to `handlers/routes.go`: POST /shares/media, POST /shares/album, DELETE /shares/{id}, GET /media/shared, GET /albums/shared
+- [X] T183 [US3] Update `services/migrations.go`: Add Share
+- [X] T184 [US3] Add OpenTracing spans
+- [X] T185 [US3] **RUN TESTS** - Verify all PASS (green) ✅
 
 ### Step 4: Refactor & Verify ♻️✅
 
-- [ ] T190 [US3] Refactor, run tests after each change ✅
-- [ ] T191 [US3] Verify coverage >80%, all scenarios and errors tested
-- [ ] T192 [US3] Manual verification: Share media between two users, revoke, verify album sharing includes future items
+- [X] T190 [US3] Refactor, run tests after each change ✅
+- [X] T191 [US3] Verify coverage >80%, all scenarios and errors tested
+- [X] T192 [US3] Manual verification: Share media between two users, revoke, verify album sharing includes future items
 
 ---
 

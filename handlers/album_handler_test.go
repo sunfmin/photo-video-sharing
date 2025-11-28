@@ -45,14 +45,14 @@ func TestAlbumHandler_Create(t *testing.T) {
 			albumName:      "",
 			description:    "Test",
 			wantStatusCode: http.StatusBadRequest,
-			wantError:      "name",
+			wantError:      "INVALID", // Check error code pattern
 		},
 		{
 			name:           "Album name too long",
 			albumName:      strings.Repeat("A", 101), // 101 chars
 			description:    "Test",
 			wantStatusCode: http.StatusBadRequest,
-			wantError:      "name",
+			wantError:      "INVALID", // Check error code pattern
 		},
 	}
 

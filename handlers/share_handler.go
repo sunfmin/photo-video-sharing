@@ -40,7 +40,7 @@ func (h *ShareHandler) ShareMedia(w http.ResponseWriter, r *http.Request) {
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusUnauthorized, "Authentication required")
+		RespondWithError(w, Errors.AuthenticationRequired)
 		return
 	}
 
@@ -50,7 +50,7 @@ func (h *ShareHandler) ShareMedia(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusBadRequest, "Invalid request body")
+		RespondWithError(w, Errors.InvalidRequestBody)
 		return
 	}
 
@@ -79,7 +79,7 @@ func (h *ShareHandler) ShareAlbum(w http.ResponseWriter, r *http.Request) {
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusUnauthorized, "Authentication required")
+		RespondWithError(w, Errors.AuthenticationRequired)
 		return
 	}
 
@@ -89,7 +89,7 @@ func (h *ShareHandler) ShareAlbum(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusBadRequest, "Invalid request body")
+		RespondWithError(w, Errors.InvalidRequestBody)
 		return
 	}
 
@@ -118,14 +118,14 @@ func (h *ShareHandler) RevokeShare(w http.ResponseWriter, r *http.Request) {
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusUnauthorized, "Authentication required")
+		RespondWithError(w, Errors.AuthenticationRequired)
 		return
 	}
 
 	shareID := r.PathValue("id")
 	if shareID == "" {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusBadRequest, "Missing share ID")
+		RespondWithError(w, Errors.MissingParameter)
 		return
 	}
 
@@ -149,7 +149,7 @@ func (h *ShareHandler) ListMediaShares(w http.ResponseWriter, r *http.Request) {
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusUnauthorized, "Authentication required")
+		RespondWithError(w, Errors.AuthenticationRequired)
 		return
 	}
 
@@ -167,11 +167,11 @@ func (h *ShareHandler) ListMediaShares(w http.ResponseWriter, r *http.Request) {
 
 // ListAlbumShares lists who an album is shared with (stub)
 func (h *ShareHandler) ListAlbumShares(w http.ResponseWriter, r *http.Request) {
-	WriteError(w, http.StatusNotImplemented, "Album share listing - TODO")
+	RespondWithError(w, Errors.NotImplemented)
 }
 
 // ListSharedAlbums lists albums shared with current user (stub)
 func (h *ShareHandler) ListSharedAlbums(w http.ResponseWriter, r *http.Request) {
-	WriteError(w, http.StatusNotImplemented, "Shared album listing - TODO")
+	RespondWithError(w, Errors.NotImplemented)
 }
 

@@ -40,14 +40,14 @@ func (h *AlbumHandler) Create(w http.ResponseWriter, r *http.Request) {
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusUnauthorized, "Authentication required")
+		RespondWithError(w, Errors.AuthenticationRequired)
 		return
 	}
 
 	var req pb.CreateAlbumRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusBadRequest, "Invalid request body")
+		RespondWithError(w, Errors.InvalidRequestBody)
 		return
 	}
 
@@ -71,7 +71,7 @@ func (h *AlbumHandler) List(w http.ResponseWriter, r *http.Request) {
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusUnauthorized, "Authentication required")
+		RespondWithError(w, Errors.AuthenticationRequired)
 		return
 	}
 
@@ -95,14 +95,14 @@ func (h *AlbumHandler) Get(w http.ResponseWriter, r *http.Request) {
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusUnauthorized, "Authentication required")
+		RespondWithError(w, Errors.AuthenticationRequired)
 		return
 	}
 
 	albumID := r.PathValue("id")
 	if albumID == "" {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusBadRequest, "Missing album ID")
+		RespondWithError(w, Errors.MissingParameter)
 		return
 	}
 
@@ -126,7 +126,7 @@ func (h *AlbumHandler) Update(w http.ResponseWriter, r *http.Request) {
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusUnauthorized, "Authentication required")
+		RespondWithError(w, Errors.AuthenticationRequired)
 		return
 	}
 
@@ -137,7 +137,7 @@ func (h *AlbumHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusBadRequest, "Invalid request body")
+		RespondWithError(w, Errors.InvalidRequestBody)
 		return
 	}
 
@@ -167,7 +167,7 @@ func (h *AlbumHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusUnauthorized, "Authentication required")
+		RespondWithError(w, Errors.AuthenticationRequired)
 		return
 	}
 
@@ -194,7 +194,7 @@ func (h *AlbumHandler) AddMedia(w http.ResponseWriter, r *http.Request) {
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusUnauthorized, "Authentication required")
+		RespondWithError(w, Errors.AuthenticationRequired)
 		return
 	}
 
@@ -204,7 +204,7 @@ func (h *AlbumHandler) AddMedia(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusBadRequest, "Invalid request body")
+		RespondWithError(w, Errors.InvalidRequestBody)
 		return
 	}
 
@@ -233,7 +233,7 @@ func (h *AlbumHandler) RemoveMedia(w http.ResponseWriter, r *http.Request) {
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusUnauthorized, "Authentication required")
+		RespondWithError(w, Errors.AuthenticationRequired)
 		return
 	}
 
@@ -243,7 +243,7 @@ func (h *AlbumHandler) RemoveMedia(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusBadRequest, "Invalid request body")
+		RespondWithError(w, Errors.InvalidRequestBody)
 		return
 	}
 
@@ -272,7 +272,7 @@ func (h *AlbumHandler) GetAlbumMedia(w http.ResponseWriter, r *http.Request) {
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusUnauthorized, "Authentication required")
+		RespondWithError(w, Errors.AuthenticationRequired)
 		return
 	}
 

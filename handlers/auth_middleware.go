@@ -25,14 +25,15 @@ func (m *AuthMiddleware) RequireAuth(next http.Handler) http.Handler {
 		// Get session cookie
 		cookie, err := r.Cookie("session_id")
 		if err != nil {
-			WriteError(w, http.StatusUnauthorized, "Authentication required")
+			RespondWithError(w, Errors.AuthenticationRequired)
 			return
 		}
 
 		// Validate session
 		userID, err := m.sessionService.ValidateSession(r.Context(), cookie.Value)
 		if err != nil {
-			WriteError(w, http.StatusUnauthorized, "Invalid or expired session")
+			// Service will return ErrSessionExpired or ErrSessionInvalid
+			HandleServiceError(w, err)
 			return
 		}
 

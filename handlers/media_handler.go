@@ -45,7 +45,7 @@ func (h *MediaHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		span.SetTag("error", true)
 		span.SetTag("http.status_code", http.StatusUnauthorized)
-		WriteError(w, http.StatusUnauthorized, "Authentication required")
+		RespondWithError(w, Errors.AuthenticationRequired)
 		return
 	}
 
@@ -53,7 +53,7 @@ func (h *MediaHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		span.SetTag("error", true)
 		span.SetTag("http.status_code", http.StatusBadRequest)
-		WriteError(w, http.StatusBadRequest, "Failed to parse multipart form")
+		RespondWithError(w, Errors.InvalidRequestBody)
 		return
 	}
 
@@ -62,7 +62,7 @@ func (h *MediaHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		span.SetTag("error", true)
 		span.SetTag("http.status_code", http.StatusBadRequest)
-		WriteError(w, http.StatusBadRequest, "No file uploaded")
+		RespondWithError(w, Errors.MissingParameter)
 		return
 	}
 	defer file.Close()
@@ -108,7 +108,7 @@ func (h *MediaHandler) List(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		span.SetTag("error", true)
 		span.SetTag("http.status_code", http.StatusUnauthorized)
-		WriteError(w, http.StatusUnauthorized, "Authentication required")
+		RespondWithError(w, Errors.AuthenticationRequired)
 		return
 	}
 
@@ -143,7 +143,7 @@ func (h *MediaHandler) Get(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		span.SetTag("error", true)
 		span.SetTag("http.status_code", http.StatusUnauthorized)
-		WriteError(w, http.StatusUnauthorized, "Authentication required")
+		RespondWithError(w, Errors.AuthenticationRequired)
 		return
 	}
 
@@ -152,7 +152,7 @@ func (h *MediaHandler) Get(w http.ResponseWriter, r *http.Request) {
 	if mediaID == "" {
 		span.SetTag("error", true)
 		span.SetTag("http.status_code", http.StatusBadRequest)
-		WriteError(w, http.StatusBadRequest, "Missing media ID")
+		RespondWithError(w, Errors.MissingParameter)
 		return
 	}
 
@@ -184,7 +184,7 @@ func (h *MediaHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		span.SetTag("error", true)
 		span.SetTag("http.status_code", http.StatusUnauthorized)
-		WriteError(w, http.StatusUnauthorized, "Authentication required")
+		RespondWithError(w, Errors.AuthenticationRequired)
 		return
 	}
 
@@ -193,7 +193,7 @@ func (h *MediaHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	if mediaID == "" {
 		span.SetTag("error", true)
 		span.SetTag("http.status_code", http.StatusBadRequest)
-		WriteError(w, http.StatusBadRequest, "Missing media ID")
+		RespondWithError(w, Errors.MissingParameter)
 		return
 	}
 
@@ -219,7 +219,7 @@ func (h *MediaHandler) ListSharedWithMe(w http.ResponseWriter, r *http.Request, 
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		span.SetTag("error", true)
-		WriteError(w, http.StatusUnauthorized, "Authentication required")
+		RespondWithError(w, Errors.AuthenticationRequired)
 		return
 	}
 

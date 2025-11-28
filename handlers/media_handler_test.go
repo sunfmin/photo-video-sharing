@@ -53,7 +53,7 @@ func TestMediaHandler_UploadPhoto(t *testing.T) {
 			contentType:    "image/jpeg",
 			fileSize:       52428801, // 50MB + 1 byte
 			wantStatusCode: http.StatusRequestEntityTooLarge,
-			wantError:      "file size exceeds limit",
+			wantError:      "FILE_TOO_LARGE", // Check error code
 		},
 		{
 			name:           "Unsupported file type",
@@ -61,7 +61,7 @@ func TestMediaHandler_UploadPhoto(t *testing.T) {
 			contentType:    "application/pdf",
 			fileSize:       1024,
 			wantStatusCode: http.StatusBadRequest,
-			wantError:      "unsupported",
+			wantError:      "UNSUPPORTED_FORMAT", // Check error code
 		},
 		{
 			name:           "Empty file",
@@ -69,7 +69,7 @@ func TestMediaHandler_UploadPhoto(t *testing.T) {
 			contentType:    "image/jpeg",
 			fileSize:       0,
 			wantStatusCode: http.StatusBadRequest,
-			wantError:      "empty",
+			wantError:      "INVALID_INPUT", // Check error code
 		},
 	}
 
@@ -554,8 +554,9 @@ func TestMediaHandler_QuotaExceeded(t *testing.T) {
 		t.Errorf("Expected status 507, got %d", rec.Code)
 	}
 
-	if !strings.Contains(rec.Body.String(), "quota") {
-		t.Error("Expected quota exceeded error")
+	// Check for QUOTA_EXCEEDED error code
+	if !strings.Contains(rec.Body.String(), "QUOTA") && !strings.Contains(rec.Body.String(), "quota") {
+		t.Errorf("Expected quota exceeded error, got: %s", rec.Body.String())
 	}
 }
 

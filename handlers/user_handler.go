@@ -47,34 +47,28 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		span.SetTag("error", true)
 		span.SetTag("http.status_code", http.StatusBadRequest)
-		WriteError(w, http.StatusBadRequest, "Invalid request body")
+		RespondWithError(w, Errors.InvalidRequestBody)
 		return
 	}
 
-	// Validate input
-	if req.Email == "" {
+	// Validate input - delegate detailed validation to service
+	// Handler only does minimal parsing validation
+	if req.Email == "" || req.Password == "" {
 		span.SetTag("error", true)
 		span.SetTag("http.status_code", http.StatusBadRequest)
-		WriteError(w, http.StatusBadRequest, "email is required")
-		return
-	}
-	if req.Password == "" {
-		span.SetTag("error", true)
-		span.SetTag("http.status_code", http.StatusBadRequest)
-		WriteError(w, http.StatusBadRequest, "password is required")
+		RespondWithError(w, Errors.InvalidInput)
 		return
 	}
 	if len(req.Password) < 8 {
 		span.SetTag("error", true)
 		span.SetTag("http.status_code", http.StatusBadRequest)
-		WriteError(w, http.StatusBadRequest, "password must be at least 8 characters")
+		RespondWithError(w, Errors.InvalidInput)
 		return
 	}
-	// Basic email validation
 	if !contains(req.Email, "@") {
 		span.SetTag("error", true)
 		span.SetTag("http.status_code", http.StatusBadRequest)
-		WriteError(w, http.StatusBadRequest, "invalid email format")
+		RespondWithError(w, Errors.InvalidInput)
 		return
 	}
 
@@ -118,17 +112,13 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req pb.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		WriteError(w, http.StatusBadRequest, "Invalid request body")
+		RespondWithError(w, Errors.InvalidRequestBody)
 		return
 	}
 
-	// Validate input
-	if req.Email == "" {
-		WriteError(w, http.StatusBadRequest, "email is required")
-		return
-	}
-	if req.Password == "" {
-		WriteError(w, http.StatusBadRequest, "password is required")
+	// Validate input - minimal validation, service does detailed checks
+	if req.Email == "" || req.Password == "" {
+		RespondWithError(w, Errors.InvalidInput)
 		return
 	}
 
@@ -170,7 +160,7 @@ func (h *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	// Get session from cookie
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		WriteError(w, http.StatusBadRequest, "No session found")
+		RespondWithError(w, Errors.MissingParameter)
 		return
 	}
 
@@ -200,7 +190,7 @@ func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	// User ID is set by auth middleware in context
 	userID, ok := r.Context().Value("user_id").(string)
 	if !ok {
-		WriteError(w, http.StatusUnauthorized, "Unauthorized")
+		RespondWithError(w, Errors.Unauthorized)
 		return
 	}
 
@@ -220,12 +210,12 @@ func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) PasswordReset(w http.ResponseWriter, r *http.Request) {
 	var req pb.PasswordResetRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		WriteError(w, http.StatusBadRequest, "Invalid request body")
+		RespondWithError(w, Errors.InvalidRequestBody)
 		return
 	}
 
 	if req.Email == "" {
-		WriteError(w, http.StatusBadRequest, "email is required")
+		RespondWithError(w, Errors.InvalidInput)
 		return
 	}
 

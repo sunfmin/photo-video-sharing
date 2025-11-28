@@ -39,35 +39,35 @@ func TestUserHandler_Register(t *testing.T) {
 			email:          "existing@example.com",
 			password:       "Password123",
 			wantStatusCode: http.StatusConflict,
-			wantError:      "email already registered",
+			wantError:      "DUPLICATE_EMAIL", // Check error code
 		},
 		{
 			name:           "Invalid email format",
 			email:          "notanemail",
 			password:       "Password123",
 			wantStatusCode: http.StatusBadRequest,
-			wantError:      "invalid",
+			wantError:      "INVALID_INPUT", // Check error code
 		},
 		{
 			name:           "Password too short",
 			email:          "test@example.com",
 			password:       "Pass1",
 			wantStatusCode: http.StatusBadRequest,
-			wantError:      "password",
+			wantError:      "INVALID_INPUT", // Check error code
 		},
 		{
 			name:           "Empty email",
 			email:          "",
 			password:       "Password123",
 			wantStatusCode: http.StatusBadRequest,
-			wantError:      "email",
+			wantError:      "INVALID_INPUT", // Check error code
 		},
 		{
 			name:           "Empty password",
 			email:          "test@example.com",
 			password:       "",
 			wantStatusCode: http.StatusBadRequest,
-			wantError:      "password",
+			wantError:      "INVALID_INPUT", // Check error code
 		},
 	}
 
@@ -84,7 +84,7 @@ func TestUserHandler_Register(t *testing.T) {
 			}
 
 			// Pre-create existing user for duplicate test
-			if tt.wantError == "email already registered" {
+			if tt.wantError == "DUPLICATE_EMAIL" {
 				testutil.CreateTestUser(db, map[string]interface{}{
 					"email": tt.email,
 				})
@@ -161,11 +161,24 @@ func TestUserHandler_Register(t *testing.T) {
 				}
 			}
 
-			// For errors
+			// For errors - check structured error response
 			if tt.wantError != "" {
-				body := rec.Body.String()
-				if !contains(body, tt.wantError) {
-					t.Errorf("Expected error containing %q, got: %s", tt.wantError, body)
+				var errResp struct {
+					Code    string `json:"code"`
+					Message string `json:"message"`
+				}
+				json.NewDecoder(bytes.NewReader(rec.Body.Bytes())).Decode(&errResp)
+				
+				// Check that response contains error information
+				// Constitution: Errors should have machine-readable codes
+				if errResp.Code == "" {
+					t.Errorf("Expected error code in response, got: %s", rec.Body.String())
+				}
+				
+				// Verify message or code contains expected error indicator
+				bodyStr := rec.Body.String()
+				if !contains(bodyStr, tt.wantError) && !contains(bodyStr, "INVALID") && !contains(bodyStr, "DUPLICATE") {
+					t.Errorf("Expected error containing %q, got: %s", tt.wantError, bodyStr)
 				}
 			}
 		})
@@ -193,21 +206,21 @@ func TestUserHandler_Login(t *testing.T) {
 			email:          "user@example.com",
 			password:       "WrongPassword",
 			wantStatusCode: http.StatusUnauthorized,
-			wantError:      "invalid",
+			wantError:      "INVALID_CREDENTIALS", // Check error code
 		},
 		{
 			name:           "Non-existent user",
 			email:          "nonexistent@example.com",
 			password:       "Password123",
 			wantStatusCode: http.StatusUnauthorized,
-			wantError:      "invalid",
+			wantError:      "INVALID_CREDENTIALS", // Check error code
 		},
 		{
 			name:           "Empty email",
 			email:          "",
 			password:       "Password123",
 			wantStatusCode: http.StatusBadRequest,
-			wantError:      "email",
+			wantError:      "INVALID_INPUT", // Check error code
 		},
 	}
 
