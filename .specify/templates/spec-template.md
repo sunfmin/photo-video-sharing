@@ -18,6 +18,11 @@
   - Tested independently
   - Deployed independently
   - Demonstrated to users independently
+  
+  CRITICAL - Scenario Identification:
+  Each acceptance scenario has a unique ID (e.g., "US1-AS1", "US1-AS2") for tracking.
+  These IDs will be used to map scenarios to automated tests during implementation.
+  This ensures every scenario listed here is verified in the system.
 -->
 
 ### User Story 1 - [Brief Title] (Priority: P1)
@@ -30,8 +35,8 @@
 
 **Acceptance Scenarios**:
 
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
-2. **Given** [initial state], **When** [action], **Then** [expected outcome]
+1. **US1-AS1**: **Given** [initial state], **When** [action], **Then** [expected outcome]
+2. **US1-AS2**: **Given** [initial state], **When** [action], **Then** [expected outcome]
 
 ---
 
@@ -45,7 +50,8 @@
 
 **Acceptance Scenarios**:
 
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
+1. **US2-AS1**: **Given** [initial state], **When** [action], **Then** [expected outcome]
+2. **US2-AS2**: **Given** [initial state], **When** [action], **Then** [expected outcome]
 
 ---
 
@@ -59,7 +65,8 @@
 
 **Acceptance Scenarios**:
 
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
+1. **US3-AS1**: **Given** [initial state], **When** [action], **Then** [expected outcome]
+2. **US3-AS2**: **Given** [initial state], **When** [action], **Then** [expected outcome]
 
 ---
 
@@ -68,12 +75,36 @@
 ### Edge Cases
 
 <!--
-  ACTION REQUIRED: The content in this section represents placeholders.
-  Fill them out with the right edge cases.
+  ACTION REQUIRED: Document what happens in exceptional or boundary situations.
+  Think about what could go wrong or what unusual inputs/states the system might encounter.
 -->
 
-- What happens when [boundary condition]?
-- How does system handle [error scenario]?
+**Invalid or Missing Input**:
+- What happens when required information is not provided?
+- What happens when information is in the wrong format?
+- What happens with malicious input (e.g., script injection attempts)?
+- [Add specific scenarios for this feature]
+
+**Boundary Conditions**:
+- What happens with zero, negative, or very large numbers?
+- What happens with empty lists or missing data?
+- [Add specific scenarios for this feature]
+
+**Access Control** (if applicable):
+- What happens when users try to access things they shouldn't?
+- What happens when credentials are missing or expired?
+- [Add specific scenarios for this feature]
+
+**Data Conflicts**:
+- What happens when trying to access something that doesn't exist?
+- What happens when trying to create something that already exists?
+- What happens when two people modify the same thing simultaneously?
+- [Add specific scenarios for this feature]
+
+**System Errors**:
+- What happens when data can't be saved?
+- What happens when related information is missing or invalid?
+- [Add specific scenarios for this feature]
 
 ## Requirements *(mandatory)*
 
@@ -89,6 +120,11 @@
 - **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
+
+**Error Handling Requirements**:
+- **FR-ERR-001**: System MUST provide clear error messages when operations fail
+- **FR-ERR-002**: System MUST distinguish between user errors (invalid input) and system errors (technical failures)
+- **FR-ERR-003**: Error messages MUST NOT expose sensitive technical details to users
 
 *Example of marking unclear requirements:*
 
@@ -113,3 +149,14 @@
 - **SC-002**: [Measurable metric, e.g., "System handles 1000 concurrent users without degradation"]
 - **SC-003**: [User satisfaction metric, e.g., "90% of users successfully complete primary task on first attempt"]
 - **SC-004**: [Business metric, e.g., "Reduce support tickets related to [X] by 50%"]
+
+### Verification Requirements
+
+All acceptance scenarios and edge cases listed above MUST be:
+
+- **Testable**: Each scenario can be demonstrated and verified in a test environment
+- **Complete**: Tests verify the entire expected behavior, not partial outcomes
+- **Automated**: Tests can be run repeatedly without manual intervention
+- **Independent**: Each scenario can be tested separately
+
+Every acceptance scenario (US#-AS#) listed above will have a corresponding automated test that validates the expected outcome matches the "Then" clause.

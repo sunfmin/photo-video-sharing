@@ -1,0 +1,723 @@
+openapi: 3.0.3
+info:
+  title: Photo Video Sharing API
+  version: 1.0.0
+  description: |
+    REST API for photo and video sharing platform.
+    
+    **Authentication**: Session-based using HTTP-only cookies.
+    All endpoints except /auth/* require valid session.
+    
+    **Media Upload**: Uses multipart/form-data for file uploads.
+    **Data Format**: JSON for all request/response bodies (except uploads).
+    **Protobuf Source**: This OpenAPI spec is derived from .proto files in this directory.
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development
+  - url: https://api.photovideo.example.com/api/v1
+    description: Production
+
+tags:
+  - name: Authentication
+    description: User registration, login, logout
+  - name: Media
+    description: Upload, view, delete photos and videos
+  - name: Albums
+    description: Organize media into albums
+  - name: Sharing
+    description: Share media and albums with other users
+
+paths:
+  # Authentication Endpoints
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register new user account
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                  pattern: '^(?=.*[A-Za-z])(?=.*\d).+$'
+                  description: Must contain at least one letter and one number
+      responses:
+        '201':
+          description: User registered successfully
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: session_id=abc123; HttpOnly; Secure; SameSite=Strict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email already registered
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login to existing account
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Logout current session
+      operationId: logout
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Logout successful
+
+  /auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get current user info
+      operationId: getCurrentUser
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Media Endpoints
+  /media:
+    get:
+      tags: [Media]
+      summary: List user's media (gallery)
+      operationId: listMedia
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: page_token
+          in: query
+          schema:
+            type: string
+        - name: file_type_filter
+          in: query
+          schema:
+            type: string
+            enum: [image, video]
+        - name: album_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Media list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  media:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Media'
+                  next_page_token:
+                    type: string
+                  total_count:
+                    type: integer
+
+    post:
+      tags: [Media]
+      summary: Upload media file
+      operationId: uploadMedia
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Photo (JPG/PNG/HEIC, max 50MB) or Video (MP4/MOV/AVI, max 500MB)
+      responses:
+        '201':
+          description: Upload successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+        '400':
+          description: Invalid file type or size
+        '413':
+          description: File too large
+        '507':
+          description: Storage quota exceeded
+
+  /media/{id}:
+    get:
+      tags: [Media]
+      summary: Get media by ID
+      operationId: getMedia
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Media details with download URLs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  media:
+                    $ref: '#/components/schemas/Media'
+                  download_url:
+                    type: string
+                    description: Presigned URL for original file
+                  thumbnail_url:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Media]
+      summary: Delete media
+      operationId: deleteMedia
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Media deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /media/shared:
+    get:
+      tags: [Media]
+      summary: List media shared with me
+      operationId: listSharedWithMe
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: page_token
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Shared media list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  media:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Media'
+                  next_page_token:
+                    type: string
+
+  # Album Endpoints
+  /albums:
+    get:
+      tags: [Albums]
+      summary: List user's albums
+      operationId: listAlbums
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Album list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  albums:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Album'
+
+    post:
+      tags: [Albums]
+      summary: Create album
+      operationId: createAlbum
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                description:
+                  type: string
+                  maxLength: 1000
+      responses:
+        '201':
+          description: Album created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Album'
+
+  /albums/{id}:
+    get:
+      tags: [Albums]
+      summary: Get album by ID
+      operationId: getAlbum
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Album details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Album'
+
+    put:
+      tags: [Albums]
+      summary: Update album
+      operationId: updateAlbum
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Album updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Album'
+
+    delete:
+      tags: [Albums]
+      summary: Delete album
+      operationId: deleteAlbum
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: delete_media
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Album deleted
+
+  /albums/{id}/media:
+    get:
+      tags: [Albums]
+      summary: Get album contents
+      operationId: getAlbumMedia
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Album media
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  media:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Media'
+
+    post:
+      tags: [Albums]
+      summary: Add media to album
+      operationId: addMediaToAlbum
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [media_ids]
+              properties:
+                media_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '200':
+          description: Media added to album
+
+    delete:
+      tags: [Albums]
+      summary: Remove media from album
+      operationId: removeMediaFromAlbum
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [media_ids]
+              properties:
+                media_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '200':
+          description: Media removed from album
+
+  # Sharing Endpoints
+  /shares/media:
+    post:
+      tags: [Sharing]
+      summary: Share media with users
+      operationId: shareMedia
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [media_id, recipient_emails]
+              properties:
+                media_id:
+                  type: string
+                  format: uuid
+                recipient_emails:
+                  type: array
+                  items:
+                    type: string
+                    format: email
+      responses:
+        '201':
+          description: Media shared
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shares:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Share'
+                  success_count:
+                    type: integer
+
+  /shares/album:
+    post:
+      tags: [Sharing]
+      summary: Share album with users
+      operationId: shareAlbum
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [album_id, recipient_emails]
+              properties:
+                album_id:
+                  type: string
+                  format: uuid
+                recipient_emails:
+                  type: array
+                  items:
+                    type: string
+                    format: email
+      responses:
+        '201':
+          description: Album shared
+
+  /shares/{id}:
+    delete:
+      tags: [Sharing]
+      summary: Revoke share
+      operationId: revokeShare
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Share revoked
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session_id
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        storage_used:
+          type: integer
+          format: int64
+        storage_quota:
+          type: integer
+          format: int64
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Media:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        owner_id:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        file_type:
+          type: string
+        file_size:
+          type: integer
+          format: int64
+        storage_path:
+          type: string
+        thumbnail_path:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        duration:
+          type: integer
+          description: Video duration in seconds
+        exif_data:
+          type: object
+        uploaded_at:
+          type: string
+          format: date-time
+
+    Album:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        owner_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        cover_thumbnail_url:
+          type: string
+        media_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    Share:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        media_id:
+          type: string
+          format: uuid
+        album_id:
+          type: string
+          format: uuid
+        owner_id:
+          type: string
+          format: uuid
+        shared_with_user_id:
+          type: string
+          format: uuid
+        shared_with_email:
+          type: string
+          format: email
+        created_at:
+          type: string
+          format: date-time
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+              message:
+                type: string
+
+    Unauthorized:
+      description: Not authenticated
+
+    NotFound:
+      description: Resource not found
+

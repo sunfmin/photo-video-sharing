@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package photovideo.v1;
+
+option go_package = "github.com/yourorg/photo-video-sharing/api/gen/v1;photovideov1";
+
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+import "media.proto";
+
+// Album represents a collection of media items
+message Album {
+  string id = 1; // UUID
+  string owner_id = 2; // UUID
+  string name = 3 [(validate.rules).string = {min_len: 1, max_len: 100}];
+  string description = 4 [(validate.rules).string.max_len = 1000];
+  string cover_thumbnail_url = 5; // First media item's thumbnail
+  int32 media_count = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+// Create album
+message CreateAlbumRequest {
+  string name = 1 [(validate.rules).string = {min_len: 1, max_len: 100}];
+  string description = 2 [(validate.rules).string.max_len = 1000];
+}
+
+message CreateAlbumResponse {
+  Album album = 1;
+}
+
+// Get album by ID
+message GetAlbumRequest {
+  string id = 1 [(validate.rules).string.uuid = true];
+}
+
+message GetAlbumResponse {
+  Album album = 1;
+}
+
+// List user's albums
+message ListAlbumsRequest {
+  int32 page_size = 1 [(validate.rules).int32 = {gte: 1, lte: 100}];
+  string page_token = 2;
+}
+
+message ListAlbumsResponse {
+  repeated Album albums = 1;
+  string next_page_token = 2;
+  int64 total_count = 3;
+}
+
+// Update album
+message UpdateAlbumRequest {
+  string id = 1 [(validate.rules).string.uuid = true];
+  string name = 2 [(validate.rules).string = {min_len: 1, max_len: 100}];
+  string description = 3 [(validate.rules).string.max_len = 1000];
+}
+
+message UpdateAlbumResponse {
+  Album album = 1;
+}
+
+// Delete album
+message DeleteAlbumRequest {
+  string id = 1 [(validate.rules).string.uuid = true];
+  bool delete_media = 2; // If true, delete media; if false, just remove from album
+}
+
+message DeleteAlbumResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Add media to album
+message AddMediaToAlbumRequest {
+  string album_id = 1 [(validate.rules).string.uuid = true];
+  repeated string media_ids = 2 [(validate.rules).repeated = {
+    min_items: 1,
+    max_items: 100,
+    items: {string: {uuid: true}}
+  }];
+}
+
+message AddMediaToAlbumResponse {
+  int32 added_count = 1;
+  repeated string errors = 2; // Errors for specific media IDs
+}
+
+// Remove media from album
+message RemoveMediaFromAlbumRequest {
+  string album_id = 1 [(validate.rules).string.uuid = true];
+  repeated string media_ids = 2 [(validate.rules).repeated = {
+    min_items: 1,
+    items: {string: {uuid: true}}
+  }];
+}
+
+message RemoveMediaFromAlbumResponse {
+  int32 removed_count = 1;
+}
+
+// Get album contents (media items)
+message GetAlbumMediaRequest {
+  string album_id = 1 [(validate.rules).string.uuid = true];
+  int32 page_size = 2 [(validate.rules).int32 = {gte: 1, lte: 100}];
+  string page_token = 3;
+}
+
+message GetAlbumMediaResponse {
+  repeated Media media = 1;
+  string next_page_token = 2;
+  int64 total_count = 3;
+}
+
