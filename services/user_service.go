@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/opentracing/opentracing-go"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
@@ -14,32 +15,72 @@ import (
 	pb "github.com/yourorg/photo-video-sharing/api/gen/v1"
 )
 
-// UserService handles user-related business logic
-type UserService struct {
-	db *gorm.DB
+// UserService interface defines user operations
+type UserService interface {
+	Register(ctx context.Context, req *pb.RegisterRequest) (*pb.User, error)
+	Login(ctx context.Context, req *pb.LoginRequest) (*pb.User, error)
+	GetCurrentUser(ctx context.Context, userID string) (*pb.User, error)
+	PasswordReset(ctx context.Context, req *pb.PasswordResetRequest) (*pb.PasswordResetResponse, error)
 }
 
-// NewUserService creates a new UserService
-func NewUserService(db *gorm.DB) *UserService {
-	return &UserService{db: db}
+// userService implements UserService
+type userService struct {
+	db     *gorm.DB
+	tracer opentracing.Tracer
+}
+
+// userServiceBuilder builds UserService with optional dependencies
+type userServiceBuilder struct {
+	db     *gorm.DB
+	tracer opentracing.Tracer
+}
+
+// NewUserService creates a new UserService builder (Principle X: Builder Pattern)
+func NewUserService(db *gorm.DB) *userServiceBuilder {
+	return &userServiceBuilder{
+		db:     db,
+		tracer: opentracing.NoopTracer{}, // Default to noop
+	}
+}
+
+// WithTracer adds OpenTracing support (optional)
+func (b *userServiceBuilder) WithTracer(tracer opentracing.Tracer) *userServiceBuilder {
+	b.tracer = tracer
+	return b
+}
+
+// Build constructs the UserService
+func (b *userServiceBuilder) Build() UserService {
+	return &userService{
+		db:     b.db,
+		tracer: b.tracer,
+	}
 }
 
 // Register creates a new user account
-func (s *UserService) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.User, error) {
+func (s *userService) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.User, error) {
+	// Principle XI: Create OpenTracing span
+	span, ctx := opentracing.StartSpanFromContext(ctx, "UserService.Register")
+	defer span.Finish()
+	span.SetTag("email", req.Email)
+
 	// Validate password complexity (letter + number)
 	if !hasLetterAndNumber(req.Password) {
+		span.SetTag("error", true)
 		return nil, fmt.Errorf("%w: password must contain at least one letter and one number", ErrInvalidInput)
 	}
 
 	// Check if email already exists
 	var existingUser models.User
 	if err := s.db.WithContext(ctx).Where("email = ?", req.Email).First(&existingUser).Error; err == nil {
+		span.SetTag("error", true)
 		return nil, fmt.Errorf("%w", ErrDuplicateEmail)
 	}
 
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
+		span.SetTag("error", true)
 		return nil, fmt.Errorf("%w: failed to hash password", ErrInternalError)
 	}
 
@@ -54,7 +95,9 @@ func (s *UserService) Register(ctx context.Context, req *pb.RegisterRequest) (*p
 		UpdatedAt:     time.Now(),
 	}
 
+	// Principle XII: Use context-aware database operations
 	if err := s.db.WithContext(ctx).Create(&user).Error; err != nil {
+		span.SetTag("error", true)
 		return nil, fmt.Errorf("%w: %v", ErrDatabaseError, err)
 	}
 
@@ -62,10 +105,16 @@ func (s *UserService) Register(ctx context.Context, req *pb.RegisterRequest) (*p
 }
 
 // Login authenticates a user and returns user info (session created by SessionService)
-func (s *UserService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.User, error) {
+func (s *userService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.User, error) {
+	// Principle XI: Create OpenTracing span
+	span, ctx := opentracing.StartSpanFromContext(ctx, "UserService.Login")
+	defer span.Finish()
+	span.SetTag("email", req.Email)
+
 	// Find user by email
 	var user models.User
 	if err := s.db.WithContext(ctx).Where("email = ?", req.Email).First(&user).Error; err != nil {
+		span.SetTag("error", true)
 		if err == gorm.ErrRecordNotFound {
 			return nil, fmt.Errorf("%w", ErrInvalidCredentials)
 		}
@@ -74,6 +123,7 @@ func (s *UserService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.User
 
 	// Verify password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+		span.SetTag("error", true)
 		return nil, fmt.Errorf("%w", ErrInvalidCredentials)
 	}
 
@@ -81,9 +131,15 @@ func (s *UserService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.User
 }
 
 // GetCurrentUser retrieves user by ID
-func (s *UserService) GetCurrentUser(ctx context.Context, userID string) (*pb.User, error) {
+func (s *userService) GetCurrentUser(ctx context.Context, userID string) (*pb.User, error) {
+	// Principle XI: Create OpenTracing span
+	span, ctx := opentracing.StartSpanFromContext(ctx, "UserService.GetCurrentUser")
+	defer span.Finish()
+	span.SetTag("user_id", userID)
+
 	var user models.User
 	if err := s.db.WithContext(ctx).Where("id = ?", userID).First(&user).Error; err != nil {
+		span.SetTag("error", true)
 		if err == gorm.ErrRecordNotFound {
 			return nil, fmt.Errorf("%w", ErrNotFound)
 		}
@@ -94,7 +150,12 @@ func (s *UserService) GetCurrentUser(ctx context.Context, userID string) (*pb.Us
 }
 
 // PasswordReset initiates password reset flow (simplified - just returns success)
-func (s *UserService) PasswordReset(ctx context.Context, req *pb.PasswordResetRequest) (*pb.PasswordResetResponse, error) {
+func (s *userService) PasswordReset(ctx context.Context, req *pb.PasswordResetRequest) (*pb.PasswordResetResponse, error) {
+	// Principle XI: Create OpenTracing span
+	span, ctx := opentracing.StartSpanFromContext(ctx, "UserService.PasswordReset")
+	defer span.Finish()
+	span.SetTag("email", req.Email)
+
 	// Verify user exists
 	var user models.User
 	if err := s.db.WithContext(ctx).Where("email = ?", req.Email).First(&user).Error; err != nil {
@@ -105,6 +166,7 @@ func (s *UserService) PasswordReset(ctx context.Context, req *pb.PasswordResetRe
 				Message:   "If an account exists with this email, a password reset link has been sent.",
 			}, nil
 		}
+		span.SetTag("error", true)
 		return nil, fmt.Errorf("%w: %v", ErrDatabaseError, err)
 	}
 

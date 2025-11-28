@@ -4,17 +4,24 @@ import (
 	"net/http"
 
 	"github.com/opentracing/opentracing-go"
+	
+	"github.com/yourorg/photo-video-sharing/services"
 )
 
 // SetupRoutes configures all application routes
 // This function is used by both production and tests to ensure consistent routing
+// Principle IV: Shared routing configuration ensures test accuracy
 func SetupRoutes(
-	userHandler *UserHandler,
-	mediaHandler *MediaHandler,
-	albumHandler *AlbumHandler,
-	shareHandler *ShareHandler,
+	userService services.UserService,
+	sessionService services.SessionService,
 ) http.Handler {
 	mux := http.NewServeMux()
+
+	// Create handlers
+	userHandler := NewUserHandler(userService, sessionService)
+	mediaHandler := NewMediaHandler()
+	albumHandler := NewAlbumHandler()
+	shareHandler := NewShareHandler()
 
 	// Health check
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {

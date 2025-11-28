@@ -88,14 +88,12 @@ func TestUserHandler_Register(t *testing.T) {
 				})
 			}
 
-			// Create service and handler
-			userService := services.NewUserService(db)
-			sessionService := services.NewSessionService(db)
-			userHandler := handlers.NewUserHandler(userService, sessionService)
+			// Principle X: Use builder pattern
+			userService := services.NewUserService(db).Build()
+			sessionService := services.NewSessionService(db).Build()
 
-			// Setup routes
-			mux := http.NewServeMux()
-			mux.HandleFunc("POST /auth/register", userHandler.Register)
+			// Principle IV: Setup routes using shared configuration
+			mux := handlers.SetupRoutes(userService, sessionService)
 
 			// Create request
 			reqBody := map[string]string{
@@ -220,13 +218,12 @@ func TestUserHandler_Login(t *testing.T) {
 				"password": "Password123",
 			})
 
-			// Create service and handler
-			userService := services.NewUserService(db)
-			sessionService := services.NewSessionService(db)
-			userHandler := handlers.NewUserHandler(userService, sessionService)
+			// Principle X: Use builder pattern
+			userService := services.NewUserService(db).Build()
+			sessionService := services.NewSessionService(db).Build()
 
-			mux := http.NewServeMux()
-			mux.HandleFunc("POST /auth/login", userHandler.Login)
+			// Principle IV: Setup routes using shared configuration
+			mux := handlers.SetupRoutes(userService, sessionService)
 
 			// Create request
 			reqBody := map[string]string{
@@ -342,9 +339,11 @@ func TestUserHandler_Unauthorized(t *testing.T) {
 		t.Fatalf("Failed to migrate: %v", err)
 	}
 
+	// Principle X: Use builder pattern
+	userService := services.NewUserService(db).Build()
+	sessionService := services.NewSessionService(db).Build()
+
 	// Create handler with auth middleware
-	userService := services.NewUserService(db)
-	sessionService := services.NewSessionService(db)
 	userHandler := handlers.NewUserHandler(userService, sessionService)
 	authMiddleware := handlers.NewAuthMiddleware(sessionService)
 
@@ -379,12 +378,11 @@ func TestUserHandler_PasswordReset(t *testing.T) {
 		"email": "user@example.com",
 	})
 
-	userService := services.NewUserService(db)
-	sessionService := services.NewSessionService(db)
-	userHandler := handlers.NewUserHandler(userService, sessionService)
+	// Principle X: Use builder pattern
+	userService := services.NewUserService(db).Build()
+	sessionService := services.NewSessionService(db).Build()
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("POST /auth/password-reset", userHandler.PasswordReset)
+	mux := handlers.SetupRoutes(userService, sessionService)
 
 	reqBody := map[string]string{
 		"email": "user@example.com",
@@ -429,11 +427,13 @@ func TestUserHandler_GetCurrentUser(t *testing.T) {
 	})
 	session := testutil.CreateTestSession(db, user.ID, nil)
 
-	userService := services.NewUserService(db)
-	sessionService := services.NewSessionService(db)
-	userHandler := handlers.NewUserHandler(userService, sessionService)
-	authMiddleware := handlers.NewAuthMiddleware(sessionService)
+	// Principle X: Use builder pattern
+	userService := services.NewUserService(db).Build()
+	sessionService := services.NewSessionService(db).Build()
 
+	// Create auth middleware and handler
+	authMiddleware := handlers.NewAuthMiddleware(sessionService)
+	userHandler := handlers.NewUserHandler(userService, sessionService)
 	mux := http.NewServeMux()
 	mux.Handle("GET /auth/me", authMiddleware.RequireAuth(http.HandlerFunc(userHandler.GetCurrentUser)))
 
@@ -483,11 +483,13 @@ func TestUserHandler_ExpiredSession(t *testing.T) {
 		"expires_at": time.Now().Add(-1 * time.Hour), // Expired 1 hour ago
 	})
 
-	userService := services.NewUserService(db)
-	sessionService := services.NewSessionService(db)
-	userHandler := handlers.NewUserHandler(userService, sessionService)
-	authMiddleware := handlers.NewAuthMiddleware(sessionService)
+	// Principle X: Use builder pattern
+	userService := services.NewUserService(db).Build()
+	sessionService := services.NewSessionService(db).Build()
 
+	// Create auth middleware and handler
+	authMiddleware := handlers.NewAuthMiddleware(sessionService)
+	userHandler := handlers.NewUserHandler(userService, sessionService)
 	mux := http.NewServeMux()
 	mux.Handle("GET /auth/me", authMiddleware.RequireAuth(http.HandlerFunc(userHandler.GetCurrentUser)))
 

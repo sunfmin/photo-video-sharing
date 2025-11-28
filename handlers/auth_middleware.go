@@ -9,11 +9,11 @@ import (
 
 // AuthMiddleware handles authentication for protected routes
 type AuthMiddleware struct {
-	sessionService *services.SessionService
+	sessionService services.SessionService
 }
 
 // NewAuthMiddleware creates a new AuthMiddleware
-func NewAuthMiddleware(sessionService *services.SessionService) *AuthMiddleware {
+func NewAuthMiddleware(sessionService services.SessionService) *AuthMiddleware {
 	return &AuthMiddleware{
 		sessionService: sessionService,
 	}
