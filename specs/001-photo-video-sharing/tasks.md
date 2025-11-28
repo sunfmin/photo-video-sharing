@@ -122,18 +122,18 @@
 
 ### Step 1: Protobuf (Design) 📝
 
-- [ ] T070 [P] [US1] Define Media message in `api/proto/v1/media.proto`: id, owner_id, filename, file_type, file_size, storage_path, thumbnail_path, width, height, duration, exif_data, timestamps
-- [ ] T071 [P] [US1] Define media requests/responses in `api/proto/v1/media.proto`: UploadMediaRequest, GetMediaRequest, ListMediaRequest, DeleteMediaRequest, BatchUploadRequest
-- [ ] T072 [US1] Add validation rules to media.proto (file size limits, supported types), run `make proto`, commit generated code
+- [X] T070 [P] [US1] Define Media message in `api/proto/v1/media.proto`: id, owner_id, filename, file_type, file_size, storage_path, thumbnail_path, width, height, duration, exif_data, timestamps
+- [X] T071 [P] [US1] Define media requests/responses in `api/proto/v1/media.proto`: UploadMediaRequest, GetMediaRequest, ListMediaRequest, DeleteMediaRequest, BatchUploadRequest
+- [X] T072 [US1] Add validation rules to media.proto (file size limits, supported types), run `make proto`, commit generated code
 
 ### Step 2: Infrastructure Services 🏗️
 
-- [ ] T075 [P] [US1] Create StorageService interface in `services/storage_service.go`: Upload(), Download(), Delete(), GetPresignedURL()
-- [ ] T076 [P] [US1] Implement MinIO storage in `internal/storage/minio.go`: Connect to MinIO, implement StorageService interface
-- [ ] T077 [P] [US1] Implement local filesystem storage in `internal/storage/local.go`: For development and testing
-- [ ] T078 [P] [US1] Create ProcessingService interface in `services/processing_service.go`: GenerateImageThumbnail(), ExtractEXIF(), GenerateVideoThumbnail()
-- [ ] T079 [P] [US1] Implement image processor in `internal/processing/image.go`: Use `imaging` library for thumbnails (150x150, 800x600, 1920x1080), `goexif` for EXIF
-- [ ] T080 [P] [US1] Implement video processor in `internal/processing/video.go`: Use FFmpeg to extract frame at 1 second for thumbnail
+- [X] T075 [P] [US1] Create StorageService interface in `services/storage_service.go`: Upload(), Download(), Delete(), GetPresignedURL()
+- [X] T076 [P] [US1] Implement MinIO storage in `internal/storage/minio.go`: Connect to MinIO, implement StorageService interface
+- [X] T077 [P] [US1] Implement local filesystem storage in `internal/storage/local.go`: For development and testing
+- [X] T078 [P] [US1] Create ProcessingService interface in `services/processing_service.go`: GenerateImageThumbnail(), ExtractEXIF(), GenerateVideoThumbnail()
+- [X] T079 [P] [US1] Implement image processor in `internal/processing/image.go`: Use `imaging` library for thumbnails (150x150, 800x600, 1920x1080), `goexif` for EXIF
+- [X] T080 [P] [US1] Implement video processor in `internal/processing/video.go`: Use FFmpeg to extract frame at 1 second for thumbnail
 
 ### Step 3: Tests (Red) 🔴
 
