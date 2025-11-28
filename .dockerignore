@@ -1,0 +1,30 @@
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+specs/
+.specify/
+
+# Development
+.env
+.env.*
+*.log
+tmp/
+.vscode/
+.idea/
+
+# Test files
+*_test.go
+testutil/
+coverage.*
+
+# Build artifacts
+bin/
+vendor/
+
+# OS files
+.DS_Store
+Thumbs.db
+

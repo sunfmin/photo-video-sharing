@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+package photovideo.v1;
+
+option go_package = "github.com/yourorg/photo-video-sharing/api/gen/v1;photovideov1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+import "validate/validate.proto";
+
+// Media represents a photo or video file
+message Media {
+  string id = 1; // UUID
+  string owner_id = 2; // UUID
+  string filename = 3;
+  string file_type = 4; // MIME type
+  int64 file_size = 5; // Bytes
+  string storage_path = 6;
+  string thumbnail_path = 7;
+  int32 width = 8;
+  int32 height = 9;
+  int32 duration = 10; // Video duration in seconds (0 for photos)
+  google.protobuf.Struct exif_data = 11; // EXIF metadata for photos
+  google.protobuf.Timestamp uploaded_at = 12;
+  google.protobuf.Timestamp created_at = 13;
+  google.protobuf.Timestamp updated_at = 14;
+}
+
+// Upload media (multipart form, not protobuf body)
+message UploadMediaRequest {
+  // File uploaded as multipart/form-data
+  // This message documents expected form fields
+  // Actual implementation uses http.Request.ParseMultipartForm
+}
+
+message UploadMediaResponse {
+  Media media = 1;
+  string message = 2; // e.g., "Upload successful, processing thumbnail..."
+}
+
+// Get single media by ID
+message GetMediaRequest {
+  string id = 1 [(validate.rules).string.uuid = true];
+}
+
+message GetMediaResponse {
+  Media media = 1;
+  string download_url = 2; // Presigned URL for direct download
+  string thumbnail_url = 3; // Presigned URL for thumbnail
+}
+
+// List user's media (gallery)
+message ListMediaRequest {
+  int32 page_size = 1 [(validate.rules).int32 = {gte: 1, lte: 100}]; // Default 50
+  string page_token = 2; // Cursor for pagination (base64 encoded timestamp+ID)
+  string file_type_filter = 3; // Optional: "image" or "video"
+  string start_date = 4; // Optional: ISO 8601 date
+  string end_date = 5; // Optional: ISO 8601 date
+  string album_id = 6; // Optional: filter by album UUID
+}
+
+message ListMediaResponse {
+  repeated Media media = 1;
+  string next_page_token = 2;
+  int64 total_count = 3;
+}
+
+// Delete media
+message DeleteMediaRequest {
+  string id = 1 [(validate.rules).string.uuid = true];
+}
+
+message DeleteMediaResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Batch upload
+message BatchUploadRequest {
+  // Multiple files uploaded as multipart/form-data
+}
+
+message BatchUploadResponse {
+  repeated Media media = 1;
+  repeated string errors = 2; // Errors for failed uploads
+  int32 success_count = 3;
+  int32 failure_count = 4;
+}
+
+// Get media shared with current user
+message ListSharedWithMeRequest {
+  int32 page_size = 1 [(validate.rules).int32 = {gte: 1, lte: 100}];
+  string page_token = 2;
+}
+
+message ListSharedWithMeResponse {
+  repeated Media media = 1;
+  string next_page_token = 2;
+  int64 total_count = 3;
+}
+

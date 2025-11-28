@@ -28,34 +28,34 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 Initialize Go module with `go mod init github.com/yourorg/photo-video-sharing`, Go 1.25+
-- [ ] T002 [P] Create directory structure: `api/proto/v1/`, `api/gen/v1/`, `services/`, `handlers/`, `internal/models/`, `internal/storage/`, `internal/processing/`, `internal/middleware/`, `internal/config/`, `testutil/`, `cmd/api/`
-- [ ] T003 [P] Install core dependencies: `gorm.io/gorm`, `gorm.io/driver/postgres`, `google.golang.org/protobuf`, `github.com/envoyproxy/protoc-gen-validate`
-- [ ] T004 [P] Install MinIO client: `github.com/minio/minio-go/v7`
-- [ ] T005 [P] Install image processing: `github.com/disintegration/imaging`, `github.com/rwcarlsen/goexif`
-- [ ] T006 [P] Install video processing: `github.com/u2takey/ffmpeg-go`
-- [ ] T007 [P] Install testing dependencies: `github.com/testcontainers/testcontainers-go`, `github.com/google/go-cmp`
-- [ ] T008 [P] Install security: `golang.org/x/crypto`, OpenTracing: `github.com/opentracing/opentracing-go`
-- [ ] T009 [P] Create `.env.example` with all required environment variables (DATABASE_URL, MINIO_*, SESSION_SECRET, etc.)
-- [ ] T010 [P] Create `docker-compose.yml` for PostgreSQL and MinIO services
-- [ ] T011 [P] Create `Makefile` with targets: `proto`, `test`, `run`, `docker-up`, `docker-down`
-- [ ] T012 [P] Create `.gitignore` (.env, tmp/, bin/, coverage.out)
-- [ ] T013 Setup protoc configuration: Install `protoc-gen-go`, `protoc-gen-validate`, add generation script to Makefile
+- [X] T001 Initialize Go module with `go mod init github.com/yourorg/photo-video-sharing`, Go 1.25+
+- [X] T002 [P] Create directory structure: `api/proto/v1/`, `api/gen/v1/`, `services/`, `handlers/`, `internal/models/`, `internal/storage/`, `internal/processing/`, `internal/middleware/`, `internal/config/`, `testutil/`, `cmd/api/`
+- [X] T003 [P] Install core dependencies: `gorm.io/gorm`, `gorm.io/driver/postgres`, `google.golang.org/protobuf`, `github.com/envoyproxy/protoc-gen-validate`
+- [X] T004 [P] Install MinIO client: `github.com/minio/minio-go/v7`
+- [X] T005 [P] Install image processing: `github.com/disintegration/imaging`, `github.com/rwcarlsen/goexif`
+- [X] T006 [P] Install video processing: `github.com/u2takey/ffmpeg-go`
+- [X] T007 [P] Install testing dependencies: `github.com/testcontainers/testcontainers-go`, `github.com/google/go-cmp`
+- [X] T008 [P] Install security: `golang.org/x/crypto`, OpenTracing: `github.com/opentracing/opentracing-go`
+- [X] T009 [P] Create `.env.example` with all required environment variables (DATABASE_URL, MINIO_*, SESSION_SECRET, etc.)
+- [X] T010 [P] Create `docker-compose.yml` for PostgreSQL and MinIO services
+- [X] T011 [P] Create `Makefile` with targets: `proto`, `test`, `run`, `docker-up`, `docker-down`
+- [X] T012 [P] Create `.gitignore` (.env, tmp/, bin/, coverage.out)
+- [X] T013 Setup protoc configuration: Install `protoc-gen-go`, `protoc-gen-validate`, add generation script to Makefile
 
 ---
 
 ## Phase 2: Foundation (⚠️ BLOCKS all user stories)
 
-- [ ] T020 Create database test utilities in `testutil/db.go`: `setupTestDB()` with testcontainers-go, `truncateTables()` with CASCADE
-- [ ] T021 [P] Create test fixtures utilities in `testutil/fixtures.go`: `CreateTestUser()`, `CreateTestMedia()`, `CreateTestAlbum()`, `CreateTestShare()` with default values
-- [ ] T022 [P] Create mock storage in `testutil/storage.go` for testing (in-memory implementation)
-- [ ] T023 [P] Setup sentinel errors in `services/errors.go`: `ErrNotFound`, `ErrUnauthorized`, `ErrQuotaExceeded`, `ErrInvalidFormat`, `ErrDuplicateEmail`, etc.
-- [ ] T024 [P] Create HTTP error codes in `handlers/error_codes.go`: Error singleton with ServiceErr mapping
-- [ ] T025 [P] Implement `HandleServiceError()` in `handlers/error_codes.go`: Automatic error mapping with context awareness
-- [ ] T026 [P] Create shared routing setup in `handlers/routes.go`: `SetupRoutes()` function for production and tests
-- [ ] T027 [P] Setup OpenTracing NoopTracer in `handlers/routes.go` for development
-- [ ] T028 [P] Create migrations export in `services/migrations.go`: `AutoMigrate()` function for external apps
-- [ ] T029 [P] Setup config loading in `internal/config/config.go`: Load from environment variables
+- [X] T020 Create database test utilities in `testutil/db.go`: `setupTestDB()` with testcontainers-go, `truncateTables()` with CASCADE
+- [X] T021 [P] Create test fixtures utilities in `testutil/fixtures.go`: `CreateTestUser()`, `CreateTestMedia()`, `CreateTestAlbum()`, `CreateTestShare()` with default values
+- [X] T022 [P] Create mock storage in `testutil/storage.go` for testing (in-memory implementation)
+- [X] T023 [P] Setup sentinel errors in `services/errors.go`: `ErrNotFound`, `ErrUnauthorized`, `ErrQuotaExceeded`, `ErrInvalidFormat`, `ErrDuplicateEmail`, etc.
+- [X] T024 [P] Create HTTP error codes in `handlers/error_codes.go`: Error singleton with ServiceErr mapping
+- [X] T025 [P] Implement `HandleServiceError()` in `handlers/error_codes.go`: Automatic error mapping with context awareness
+- [X] T026 [P] Create shared routing setup in `handlers/routes.go`: `SetupRoutes()` function for production and tests
+- [X] T027 [P] Setup OpenTracing NoopTracer in `handlers/routes.go` for development
+- [X] T028 [P] Create migrations export in `services/migrations.go`: `AutoMigrate()` function for external apps
+- [X] T029 [P] Setup config loading in `internal/config/config.go`: Load from environment variables
 
 ---
 
@@ -68,48 +68,48 @@
 
 ### Step 1: Protobuf (Design) 📝
 
-- [ ] T030 [P] [US2] Define User message in `api/proto/v1/user.proto`: id, email, storage_used, storage_quota, timestamps
-- [ ] T031 [P] [US2] Define auth requests/responses in `api/proto/v1/user.proto`: RegisterRequest, LoginRequest, LogoutRequest, PasswordResetRequest, GetCurrentUserRequest
-- [ ] T032 [US2] Add validation rules to user.proto (email format, password min 8 chars with letter+number), run `make proto`, commit generated code
+- [X] T030 [P] [US2] Define User message in `api/proto/v1/user.proto`: id, email, storage_used, storage_quota, timestamps
+- [X] T031 [P] [US2] Define auth requests/responses in `api/proto/v1/user.proto`: RegisterRequest, LoginRequest, LogoutRequest, PasswordResetRequest, GetCurrentUserRequest
+- [X] T032 [US2] Add validation rules to user.proto (email format, password min 8 chars with letter+number), run `make proto`, commit generated code
 
 ### Step 2: Tests (Red) 🔴
 
-- [ ] T035 [P] [US2] Create User model fixture in `testutil/fixtures.go`: `CreateTestUser()` with default email/password
-- [ ] T036 [P] [US2] Create Session model fixture in `testutil/fixtures.go`: `CreateTestSession()` with expiry
-- [ ] T037 [US2] Write test for US2-AS1 (register) in `handlers/user_handler_test.go`: New user registers with valid email/password → account created, auto-login
-- [ ] T038 [US2] Write test for US2-AS2 (login) in `handlers/user_handler_test.go`: Existing user logs in → session created, media gallery accessible
-- [ ] T039 [US2] Write test for US2-AS3 (isolation) in `handlers/user_handler_test.go`: User A logs in → sees own media, User B logs in → sees different media
-- [ ] T040 [US2] Write test for US2-AS4 (redirect) in `handlers/user_handler_test.go`: Unauthenticated user tries to access protected endpoint → 401 Unauthorized
-- [ ] T041 [US2] Write test for US2-AS5 (password reset) in `handlers/user_handler_test.go`: User requests password reset → reset link generated (email not actually sent in test)
-- [ ] T042 [US2] Add edge case tests: Empty email, invalid email format, short password, missing password, duplicate email, wrong password, expired session, invalid session ID
-- [ ] T043 [US2] **RUN TESTS** - Verify all FAIL (red) ❌
+- [X] T035 [P] [US2] Create User model fixture in `testutil/fixtures.go`: `CreateTestUser()` with default email/password
+- [X] T036 [P] [US2] Create Session model fixture in `testutil/fixtures.go`: `CreateTestSession()` with expiry
+- [X] T037 [US2] Write test for US2-AS1 (register) in `handlers/user_handler_test.go`: New user registers with valid email/password → account created, auto-login
+- [X] T038 [US2] Write test for US2-AS2 (login) in `handlers/user_handler_test.go`: Existing user logs in → session created, media gallery accessible
+- [X] T039 [US2] Write test for US2-AS3 (isolation) in `handlers/user_handler_test.go`: User A logs in → sees own media, User B logs in → sees different media
+- [X] T040 [US2] Write test for US2-AS4 (redirect) in `handlers/user_handler_test.go`: Unauthenticated user tries to access protected endpoint → 401 Unauthorized
+- [X] T041 [US2] Write test for US2-AS5 (password reset) in `handlers/user_handler_test.go`: User requests password reset → reset link generated (email not actually sent in test)
+- [X] T042 [US2] Add edge case tests: Empty email, invalid email format, short password, missing password, duplicate email, wrong password, expired session, invalid session ID
+- [X] T043 [US2] **RUN TESTS** - Verify all FAIL (red) ❌
 
 ### Step 3: Implementation (Green) 🟢
 
-- [ ] T045 [P] [US2] Create User model in `internal/models/user.go`: ID (UUID), Email (unique), PasswordHash, StorageUsed, StorageQuota, timestamps
-- [ ] T046 [P] [US2] Create Session model in `internal/models/session.go`: ID (UUID), UserID, ExpiresAt, LastUsedAt, CreatedAt
-- [ ] T047 [P] [US2] Add auth errors to `services/errors.go`: `ErrInvalidCredentials`, `ErrDuplicateEmail`, `ErrSessionExpired`
-- [ ] T048 [P] [US2] Add auth HTTP codes to `handlers/error_codes.go`: Map auth errors to appropriate status codes (401, 409)
-- [ ] T049 [US2] Implement UserService in `services/user_service.go`: Register(), Login(), Logout(), GetCurrentUser(), PasswordReset() methods (use bcrypt, return protobuf)
-- [ ] T050 [US2] Implement SessionService in `services/session_service.go`: CreateSession(), ValidateSession(), DeleteSession(), CleanupExpiredSessions()
-- [ ] T051 [US2] Implement UserHandler in `handlers/user_handler.go`: Register, Login, Logout, GetCurrentUser, PasswordReset (thin wrappers)
-- [ ] T052 [US2] Create auth middleware in `internal/middleware/auth.go`: Extract session cookie, validate, attach user to context, handle 401
-- [ ] T053 [US2] Add user/session routes to `handlers/routes.go`: POST /auth/register, POST /auth/login, POST /auth/logout, GET /auth/me
-- [ ] T054 [US2] Update `services/migrations.go`: Add User and Session to AutoMigrate()
-- [ ] T055 [US2] Add OpenTracing spans to UserHandler and UserService methods
-- [ ] T056 [US2] **RUN TESTS** - Verify all PASS (green) ✅
+- [X] T045 [P] [US2] Create User model in `internal/models/user.go`: ID (UUID), Email (unique), PasswordHash, StorageUsed, StorageQuota, timestamps
+- [X] T046 [P] [US2] Create Session model in `internal/models/session.go`: ID (UUID), UserID, ExpiresAt, LastUsedAt, CreatedAt
+- [X] T047 [P] [US2] Add auth errors to `services/errors.go`: `ErrInvalidCredentials`, `ErrDuplicateEmail`, `ErrSessionExpired`
+- [X] T048 [P] [US2] Add auth HTTP codes to `handlers/error_codes.go`: Map auth errors to appropriate status codes (401, 409)
+- [X] T049 [US2] Implement UserService in `services/user_service.go`: Register(), Login(), Logout(), GetCurrentUser(), PasswordReset() methods (use bcrypt, return protobuf)
+- [X] T050 [US2] Implement SessionService in `services/session_service.go`: CreateSession(), ValidateSession(), DeleteSession(), CleanupExpiredSessions()
+- [X] T051 [US2] Implement UserHandler in `handlers/user_handler.go`: Register, Login, Logout, GetCurrentUser, PasswordReset (thin wrappers)
+- [X] T052 [US2] Create auth middleware in `handlers/auth_middleware.go`: Extract session cookie, validate, attach user to context, handle 401
+- [X] T053 [US2] Add user/session routes to `handlers/routes.go`: POST /auth/register, POST /auth/login, POST /auth/logout, GET /auth/me
+- [X] T054 [US2] Update `services/migrations.go`: Add User and Session to AutoMigrate()
+- [X] T055 [US2] Add OpenTracing spans to UserHandler and UserService methods
+- [X] T056 [US2] **RUN TESTS** - Verify all PASS (green) ✅
 
 ### Step 4: Refactor ♻️
 
-- [ ] T060 [US2] Refactor: Extract password validation to helper, improve error messages, add method comments
-- [ ] T061 [US2] **RUN TESTS** after each change ✅, run with `go test -race` ✅
+- [X] T060 [US2] Refactor: Extract password validation to helper, improve error messages, add method comments
+- [X] T061 [US2] **RUN TESTS** after each change ✅, run with `go test -race` ✅
 
 ### Step 5: Verify ✅
 
-- [ ] T065 [US2] Run `go test -cover ./services/user_service.go ./handlers/user_handler_test.go` - verify >80% coverage
-- [ ] T066 [US2] Verify ALL errors tested: duplicate email, invalid credentials, expired session, missing fields
-- [ ] T067 [US2] Verify ALL scenarios tested: US2-AS1 through US2-AS5 + edge cases
-- [ ] T068 [US2] Manual verification: Start server, register user via curl, login, access protected endpoint with cookie
+- [X] T065 [US2] Run `go test -cover ./services/user_service.go ./handlers/user_handler_test.go` - verify >80% coverage
+- [X] T066 [US2] Verify ALL errors tested: duplicate email, invalid credentials, expired session, missing fields
+- [X] T067 [US2] Verify ALL scenarios tested: US2-AS1 through US2-AS5 + edge cases
+- [X] T068 [US2] Manual verification: Start server, register user via curl, login, access protected endpoint with cookie
 
 ---
 

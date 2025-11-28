@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package photovideo.v1;
+
+option go_package = "github.com/yourorg/photo-video-sharing/api/gen/v1;photovideov1";
+
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+// User represents a registered account
+message User {
+  string id = 1; // UUID
+  string email = 2 [(validate.rules).string.email = true];
+  int64 storage_used = 3;
+  int64 storage_quota = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+// Authentication requests and responses
+
+message RegisterRequest {
+  string email = 1 [(validate.rules).string = {
+    email: true,
+    min_len: 3,
+    max_len: 255
+  }];
+  string password = 2 [(validate.rules).string = {
+    min_len: 8,
+    max_len: 128
+    // Pattern validation (letter + number) handled in service layer
+  }];
+}
+
+message RegisterResponse {
+  User user = 1;
+  string session_id = 2; // Returned for auto-login after registration
+}
+
+message LoginRequest {
+  string email = 1 [(validate.rules).string.email = true];
+  string password = 2 [(validate.rules).string.min_len = 1];
+}
+
+message LoginResponse {
+  User user = 1;
+  string session_id = 2;
+}
+
+message LogoutRequest {
+  // Session extracted from cookie, no request body needed
+}
+
+message LogoutResponse {
+  bool success = 1;
+}
+
+message PasswordResetRequest {
+  string email = 1 [(validate.rules).string.email = true];
+}
+
+message PasswordResetResponse {
+  bool email_sent = 1;
+  string message = 2;
+}
+
+message GetCurrentUserRequest {
+  // Session extracted from cookie
+}
+
+message GetCurrentUserResponse {
+  User user = 1;
+}
+

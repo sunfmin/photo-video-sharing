@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package photovideo.v1;
+
+option go_package = "github.com/yourorg/photo-video-sharing/api/gen/v1;photovideov1";
+
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+// Share represents sharing of media or album with a user
+message Share {
+  string id = 1; // UUID
+  string media_id = 2; // UUID (nullable, one of media_id or album_id)
+  string album_id = 3; // UUID (nullable, one of media_id or album_id)
+  string owner_id = 4; // UUID
+  string shared_with_user_id = 5; // UUID
+  string shared_with_email = 6; // Email of recipient (for display)
+  google.protobuf.Timestamp created_at = 7;
+}
+
+// Share media with user
+message ShareMediaRequest {
+  string media_id = 1 [(validate.rules).string.uuid = true];
+  repeated string recipient_emails = 2 [(validate.rules).repeated = {
+    min_items: 1,
+    max_items: 10,
+    items: {string: {email: true}}
+  }];
+}
+
+message ShareMediaResponse {
+  repeated Share shares = 1;
+  repeated string errors = 2; // Errors for specific emails (user not found, etc.)
+  int32 success_count = 3;
+}
+
+// Share album with user
+message ShareAlbumRequest {
+  string album_id = 1 [(validate.rules).string.uuid = true];
+  repeated string recipient_emails = 2 [(validate.rules).repeated = {
+    min_items: 1,
+    max_items: 10,
+    items: {string: {email: true}}
+  }];
+}
+
+message ShareAlbumResponse {
+  repeated Share shares = 1;
+  repeated string errors = 2;
+  int32 success_count = 3;
+}
+
+// Revoke share (stop sharing)
+message RevokeShareRequest {
+  string share_id = 1 [(validate.rules).string.uuid = true];
+}
+
+message RevokeShareResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// List who a media/album is shared with
+message ListMediaSharesRequest {
+  string media_id = 1 [(validate.rules).string.uuid = true];
+}
+
+message ListMediaSharesResponse {
+  repeated Share shares = 1;
+}
+
+message ListAlbumSharesRequest {
+  string album_id = 1 [(validate.rules).string.uuid = true];
+}
+
+message ListAlbumSharesResponse {
+  repeated Share shares = 1;
+}
+
+// List albums shared with current user
+message ListSharedAlbumsRequest {
+  int32 page_size = 1 [(validate.rules).int32 = {gte: 1, lte: 100}];
+  string page_token = 2;
+}
+
+message ListSharedAlbumsResponse {
+  repeated Share shares = 1; // Include album details
+  string next_page_token = 2;
+  int64 total_count = 3;
+}
+
