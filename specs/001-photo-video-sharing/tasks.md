@@ -137,42 +137,42 @@
 
 ### Step 3: Tests (Red) 🔴
 
-- [ ] T085 [P] [US1] Create Media model fixture in `testutil/fixtures.go`: `CreateTestMedia()` with default photo/video properties
-- [ ] T086 [US1] Write test for US1-AS1 (photo upload) in `handlers/media_handler_test.go`: Upload JPG <50MB → appears in gallery within 5s
-- [ ] T087 [US1] Write test for US1-AS2 (video upload) in `handlers/media_handler_test.go`: Upload MP4 <500MB → appears with thumbnail
-- [ ] T088 [US1] Write test for US1-AS3 (gallery list) in `handlers/media_handler_test.go`: User uploads media → sees all in gallery sorted by upload date (newest first)
-- [ ] T089 [US1] Write test for US1-AS4 (photo view) in `handlers/media_handler_test.go`: Click photo → get presigned URL for full-quality download
-- [ ] T090 [US1] Write test for US1-AS5 (video view) in `handlers/media_handler_test.go`: Click video → get presigned URL for playback
-- [ ] T091 [US1] Write test for US1-AS6 (batch upload) in `handlers/media_handler_test.go`: Upload 10 photos → all appear with progress tracking
-- [ ] T092 [US1] Add edge case tests: File too large, unsupported format, empty file, quota exceeded, invalid mime type, network interruption simulation, duplicate filename
-- [ ] T093 [US1] **RUN TESTS** - Verify all FAIL (red) ❌
+- [X] T085 [P] [US1] Create Media model fixture in `testutil/fixtures.go`: `CreateTestMedia()` with default photo/video properties
+- [X] T086 [US1] Write test for US1-AS1 (photo upload) in `handlers/media_handler_test.go`: Upload JPG <50MB → appears in gallery within 5s
+- [X] T087 [US1] Write test for US1-AS2 (video upload) in `handlers/media_handler_test.go`: Upload MP4 <500MB → appears with thumbnail
+- [X] T088 [US1] Write test for US1-AS3 (gallery list) in `handlers/media_handler_test.go`: User uploads media → sees all in gallery sorted by upload date (newest first)
+- [X] T089 [US1] Write test for US1-AS4 (photo view) in `handlers/media_handler_test.go`: Click photo → get presigned URL for full-quality download
+- [X] T090 [US1] Write test for US1-AS5 (video view) in `handlers/media_handler_test.go`: Click video → get presigned URL for playback
+- [X] T091 [US1] Write test for US1-AS6 (batch upload) in `handlers/media_handler_test.go`: Upload 10 photos → all appear with progress tracking
+- [X] T092 [US1] Add edge case tests: File too large, unsupported format, empty file, quota exceeded, invalid mime type, network interruption simulation, duplicate filename
+- [X] T093 [US1] **RUN TESTS** - Verify all FAIL (red) ❌
 
 ### Step 4: Implementation (Green) 🟢
 
-- [ ] T095 [P] [US1] Create Media model in `internal/models/media.go`: ID, OwnerID, Filename, FileType, FileSize, StoragePath, ThumbnailPath, Width, Height, Duration, EXIFData, timestamps with indexes
-- [ ] T096 [P] [US1] Add media errors to `services/errors.go`: `ErrMediaNotFound`, `ErrUnsupportedFormat`, `ErrFileTooLarge`, `ErrQuotaExceeded`
-- [ ] T097 [P] [US1] Add media HTTP codes to `handlers/error_codes.go`: Map media errors to status codes (400, 404, 413, 507)
-- [ ] T098 [US1] Implement MediaService in `services/media_service.go`: Upload(), Get(), List(), Delete(), BatchUpload() with quota checking, storage coordination, async processing
-- [ ] T099 [US1] Implement file upload handler in `handlers/media_handler.go`: ParseMultipartForm, validate file type/size, stream to storage, return response before processing
-- [ ] T100 [US1] Implement media retrieval handlers in `handlers/media_handler.go`: Get (with presigned URLs), List (with pagination)
-- [ ] T101 [US1] Add media routes to `handlers/routes.go`: POST /media (upload), GET /media (list), GET /media/{id} (get), DELETE /media/{id}
-- [ ] T102 [US1] Update `services/migrations.go`: Add Media to AutoMigrate()
-- [ ] T103 [US1] Implement background processing: Async thumbnail generation and EXIF extraction after upload completes
-- [ ] T104 [US1] Add quota enforcement: Check user.storage_used + file_size <= user.storage_quota in transaction
-- [ ] T105 [US1] Add OpenTracing spans to MediaHandler and MediaService methods
-- [ ] T106 [US1] **RUN TESTS** - Verify all PASS (green) ✅
+- [X] T095 [P] [US1] Create Media model in `internal/models/media.go`: ID, OwnerID, Filename, FileType, FileSize, StoragePath, ThumbnailPath, Width, Height, Duration, EXIFData, timestamps with indexes
+- [X] T096 [P] [US1] Add media errors to `services/errors.go`: `ErrMediaNotFound`, `ErrUnsupportedFormat`, `ErrFileTooLarge`, `ErrQuotaExceeded`
+- [X] T097 [P] [US1] Add media HTTP codes to `handlers/error_codes.go`: Map media errors to status codes (400, 404, 413, 507)
+- [X] T098 [US1] Implement MediaService in `services/media_service.go`: Upload(), Get(), List(), Delete(), BatchUpload() with quota checking, storage coordination, async processing
+- [X] T099 [US1] Implement file upload handler in `handlers/media_handler.go`: ParseMultipartForm, validate file type/size, stream to storage, return response before processing
+- [X] T100 [US1] Implement media retrieval handlers in `handlers/media_handler.go`: Get (with presigned URLs), List (with pagination)
+- [X] T101 [US1] Add media routes to `handlers/routes.go`: POST /media (upload), GET /media (list), GET /media/{id} (get), DELETE /media/{id}
+- [X] T102 [US1] Update `services/migrations.go`: Add Media to AutoMigrate()
+- [X] T103 [US1] Implement background processing: Async thumbnail generation and EXIF extraction after upload completes
+- [X] T104 [US1] Add quota enforcement: Check user.storage_used + file_size <= user.storage_quota in transaction
+- [X] T105 [US1] Add OpenTracing spans to MediaHandler and MediaService methods
+- [X] T106 [US1] **RUN TESTS** - Verify all PASS (green) ✅
 
 ### Step 5: Refactor ♻️
 
-- [ ] T110 [US1] Refactor: Extract file validation to helper, extract storage path generation, improve error context
-- [ ] T111 [US1] **RUN TESTS** after each change ✅, run with `go test -race` ✅
+- [X] T110 [US1] Refactor: Extract file validation to helper, extract storage path generation, improve error context
+- [X] T111 [US1] **RUN TESTS** after each change ✅, run with `go test -race` ✅
 
 ### Step 6: Verify ✅
 
-- [ ] T115 [US1] Run `go test -cover` for media service and handlers - verify >80% coverage
-- [ ] T116 [US1] Verify ALL errors tested: file too large, unsupported format, quota exceeded, not found
-- [ ] T117 [US1] Verify ALL scenarios tested: US1-AS1 through US1-AS6 + edge cases
-- [ ] T118 [US1] Manual verification: Upload photo/video via curl, verify storage, verify thumbnail generation, verify EXIF extraction
+- [X] T115 [US1] Run `go test -cover` for media service and handlers - verify >80% coverage
+- [X] T116 [US1] Verify ALL errors tested: file too large, unsupported format, quota exceeded, not found
+- [X] T117 [US1] Verify ALL scenarios tested: US1-AS1 through US1-AS6 + edge cases
+- [X] T118 [US1] Manual verification: Upload photo/video via curl, verify storage, verify thumbnail generation, verify EXIF extraction
 
 ---
 
@@ -185,40 +185,40 @@
 
 ### Step 1: Protobuf (Design) 📝
 
-- [ ] T120 [P] [US4] Define Album message in `api/proto/v1/album.proto`: id, owner_id, name, description, cover_thumbnail_url, media_count, timestamps
-- [ ] T121 [P] [US4] Define album requests/responses in `api/proto/v1/album.proto`: CreateAlbumRequest, GetAlbumRequest, UpdateAlbumRequest, DeleteAlbumRequest, AddMediaToAlbumRequest, RemoveMediaFromAlbumRequest
-- [ ] T122 [US4] Add validation rules to album.proto (name 1-100 chars, description max 1000), run `make proto`, commit generated code
+- [X] T120 [P] [US4] Define Album message in `api/proto/v1/album.proto`: id, owner_id, name, description, cover_thumbnail_url, media_count, timestamps
+- [X] T121 [P] [US4] Define album requests/responses in `api/proto/v1/album.proto`: CreateAlbumRequest, GetAlbumRequest, UpdateAlbumRequest, DeleteAlbumRequest, AddMediaToAlbumRequest, RemoveMediaFromAlbumRequest
+- [X] T122 [US4] Add validation rules to album.proto (name 1-100 chars, description max 1000), run `make proto`, commit generated code
 
 ### Step 2: Tests (Red) 🔴
 
-- [ ] T125 [P] [US4] Create Album fixture in `testutil/fixtures.go`: `CreateTestAlbum()` with default name/description
-- [ ] T126 [US4] Write test for US4-AS1 (create album) in `handlers/album_handler_test.go`: Create album with name → appears in list
-- [ ] T127 [US4] Write test for US4-AS2 (add media) in `handlers/album_handler_test.go`: Add media to album → appears in both album and gallery
-- [ ] T128 [US4] Write test for US4-AS3 (remove media) in `handlers/album_handler_test.go`: Remove from album → removed from album, still in gallery
-- [ ] T129 [US4] Write test for US4-AS4 (album list) in `handlers/album_handler_test.go`: View albums → see names, covers, counts
-- [ ] T130 [US4] Write test for US4-AS5 (album sharing) in `handlers/album_handler_test.go`: Share album → recipient sees all current and future items
-- [ ] T131 [US4] Add edge case tests: Empty name, name too long, media already in album, non-existent media, album not found, delete album (preserve vs delete media)
-- [ ] T132 [US4] **RUN TESTS** - Verify all FAIL (red) ❌
+- [X] T125 [P] [US4] Create Album fixture in `testutil/fixtures.go`: `CreateTestAlbum()` with default name/description
+- [X] T126 [US4] Write test for US4-AS1 (create album) in `handlers/album_handler_test.go`: Create album with name → appears in list
+- [X] T127 [US4] Write test for US4-AS2 (add media) in `handlers/album_handler_test.go`: Add media to album → appears in both album and gallery
+- [X] T128 [US4] Write test for US4-AS3 (remove media) in `handlers/album_handler_test.go`: Remove from album → removed from album, still in gallery
+- [X] T129 [US4] Write test for US4-AS4 (album list) in `handlers/album_handler_test.go`: View albums → see names, covers, counts
+- [X] T130 [US4] Write test for US4-AS5 (album sharing) in `handlers/album_handler_test.go`: Share album → recipient sees all current and future items
+- [X] T131 [US4] Add edge case tests: Empty name, name too long, media already in album, non-existent media, album not found, delete album (preserve vs delete media)
+- [X] T132 [US4] **RUN TESTS** - Verify all FAIL (red) ❌
 
 ### Step 3: Implementation (Green) 🟢
 
-- [ ] T135 [P] [US4] Create Album model in `internal/models/album.go`: ID, OwnerID, Name, Description, timestamps
-- [ ] T136 [P] [US4] Create AlbumMedia junction model in `internal/models/album_media.go`: AlbumID, MediaID, AddedAt (composite PK)
-- [ ] T137 [P] [US4] Add album errors to `services/errors.go`: `ErrAlbumNotFound`, `ErrMediaAlreadyInAlbum`, `ErrInvalidAlbumName`
-- [ ] T138 [P] [US4] Add album HTTP codes to `handlers/error_codes.go`
-- [ ] T139 [US4] Implement AlbumService in `services/album_service.go`: Create(), Get(), List(), Update(), Delete(), AddMedia(), RemoveMedia(), GetAlbumMedia()
-- [ ] T140 [US4] Implement AlbumHandler in `handlers/album_handler.go`: Create, Get, List, Update, Delete, AddMedia, RemoveMedia, GetAlbumMedia
-- [ ] T141 [US4] Add album routes to `handlers/routes.go`: POST /albums, GET /albums, GET /albums/{id}, PUT /albums/{id}, DELETE /albums/{id}, POST /albums/{id}/media, DELETE /albums/{id}/media
-- [ ] T142 [US4] Update `services/migrations.go`: Add Album and AlbumMedia
-- [ ] T143 [US4] Implement cover thumbnail logic: Use first or most recent media item's thumbnail
-- [ ] T144 [US4] Add OpenTracing spans
-- [ ] T145 [US4] **RUN TESTS** - Verify all PASS (green) ✅
+- [X] T135 [P] [US4] Create Album model in `internal/models/album.go`: ID, OwnerID, Name, Description, timestamps
+- [X] T136 [P] [US4] Create AlbumMedia junction model in `internal/models/album_media.go`: AlbumID, MediaID, AddedAt (composite PK)
+- [X] T137 [P] [US4] Add album errors to `services/errors.go`: `ErrAlbumNotFound`, `ErrMediaAlreadyInAlbum`, `ErrInvalidAlbumName`
+- [X] T138 [P] [US4] Add album HTTP codes to `handlers/error_codes.go`
+- [X] T139 [US4] Implement AlbumService in `services/album_service.go`: Create(), Get(), List(), Update(), Delete(), AddMedia(), RemoveMedia(), GetAlbumMedia()
+- [X] T140 [US4] Implement AlbumHandler in `handlers/album_handler.go`: Create, Get, List, Update, Delete, AddMedia, RemoveMedia, GetAlbumMedia
+- [X] T141 [US4] Add album routes to `handlers/routes.go`: POST /albums, GET /albums, GET /albums/{id}, PUT /albums/{id}, DELETE /albums/{id}, POST /albums/{id}/media, DELETE /albums/{id}/media
+- [X] T142 [US4] Update `services/migrations.go`: Add Album and AlbumMedia
+- [X] T143 [US4] Implement cover thumbnail logic: Use first or most recent media item's thumbnail
+- [X] T144 [US4] Add OpenTracing spans
+- [X] T145 [US4] **RUN TESTS** - Verify all PASS (green) ✅
 
 ### Step 4: Refactor & Verify ♻️✅
 
-- [ ] T150 [US4] Refactor, run tests after each change ✅
-- [ ] T151 [US4] Verify coverage >80%, all scenarios and errors tested
-- [ ] T152 [US4] Manual verification: Create album, add media, remove media, delete album
+- [X] T150 [US4] Refactor, run tests after each change ✅
+- [X] T151 [US4] Verify coverage >80%, all scenarios and errors tested
+- [X] T152 [US4] Manual verification: Create album, add media, remove media, delete album
 
 ---
 
@@ -331,20 +331,20 @@
 
 ## Phase 9: Polish & Cross-Cutting
 
-- [ ] T250 [P] Create main application entry point in `cmd/api/main.go`: Load config, connect to DB and MinIO, setup services, start HTTP server
-- [ ] T251 [P] Add health check endpoint in `handlers/routes.go`: GET /health checks DB and storage connectivity
-- [ ] T252 [P] Implement graceful shutdown in `cmd/api/main.go`: Handle SIGINT/SIGTERM, close connections
+- [X] T250 [P] Create main application entry point in `cmd/api/main.go`: Load config, connect to DB and MinIO, setup services, start HTTP server
+- [X] T251 [P] Add health check endpoint in `handlers/routes.go`: GET /health checks DB and storage connectivity
+- [X] T252 [P] Implement graceful shutdown in `cmd/api/main.go`: Handle SIGINT/SIGTERM, close connections
 - [ ] T253 [P] Add request logging middleware in `internal/middleware/logging.go`: Log method, path, status, duration
 - [ ] T254 [P] Add CORS middleware in `internal/middleware/cors.go` if needed for frontend
 - [ ] T255 [P] Implement session cleanup background job: Delete expired sessions daily
-- [ ] T256 Run full test suite: `go test -v ./...` - verify all pass ✅
-- [ ] T257 Run with race detector: `go test -race ./...` - verify no data races ✅
-- [ ] T258 Run coverage analysis: `go test -coverprofile=coverage.out ./...` - verify >80% for business logic
-- [ ] T259 Run static analysis: `go vet ./...`, `golangci-lint run` if available
-- [ ] T260 [P] Security review: Verify SQL injection prevention (GORM parameterized queries), XSS prevention (no HTML rendering), session security (HTTP-only, Secure, SameSite)
-- [ ] T261 [P] Error handling review: Verify all errors have test cases, error messages don't leak sensitive info
-- [ ] T262 [P] Code cleanup: Remove debug prints, ensure comments explain WHY not WHAT, remove unused imports
-- [ ] T263 Create comprehensive README.md: Feature overview, setup instructions, development workflow, testing, deployment
+- [X] T256 Run full test suite: `go test -v ./...` - verify all pass ✅
+- [X] T257 Run with race detector: `go test -race ./...` - verify no data races ✅
+- [X] T258 Run coverage analysis: `go test -coverprofile=coverage.out ./...` - verify >80% for business logic
+- [X] T259 Run static analysis: `go vet ./...`, `golangci-lint run` if available
+- [X] T260 [P] Security review: Verify SQL injection prevention (GORM parameterized queries), XSS prevention (no HTML rendering), session security (HTTP-only, Secure, SameSite)
+- [X] T261 [P] Error handling review: Verify all errors have test cases, error messages don't leak sensitive info
+- [X] T262 [P] Code cleanup: Remove debug prints, ensure comments explain WHY not WHAT, remove unused imports
+- [X] T263 Create comprehensive README.md: Feature overview, setup instructions, development workflow, testing, deployment
 - [ ] T264 Create API documentation: Generate from OpenAPI spec, add examples
 - [ ] T265 Performance testing: Load test upload endpoint, verify 1000 concurrent users, optimize as needed
 

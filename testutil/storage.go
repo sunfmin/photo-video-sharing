@@ -2,6 +2,7 @@ package testutil
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"sync"
@@ -9,6 +10,7 @@ import (
 )
 
 // MockStorage is an in-memory storage implementation for testing
+// Implements services.StorageService interface
 type MockStorage struct {
 	mu    sync.RWMutex
 	files map[string][]byte // key -> file content
@@ -22,7 +24,7 @@ func NewMockStorage() *MockStorage {
 }
 
 // Upload stores file content in memory
-func (m *MockStorage) Upload(key string, reader io.Reader, size int64) error {
+func (m *MockStorage) Upload(ctx context.Context, key string, reader io.Reader, size int64, contentType string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -36,7 +38,7 @@ func (m *MockStorage) Upload(key string, reader io.Reader, size int64) error {
 }
 
 // Download retrieves file content from memory
-func (m *MockStorage) Download(key string) (io.ReadCloser, error) {
+func (m *MockStorage) Download(ctx context.Context, key string) (io.ReadCloser, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -49,7 +51,7 @@ func (m *MockStorage) Download(key string) (io.ReadCloser, error) {
 }
 
 // Delete removes file from memory
-func (m *MockStorage) Delete(key string) error {
+func (m *MockStorage) Delete(ctx context.Context, key string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -58,19 +60,14 @@ func (m *MockStorage) Delete(key string) error {
 }
 
 // GetPresignedURL returns a mock URL (not actually presigned)
-func (m *MockStorage) GetPresignedURL(key string, expiry time.Duration) (string, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	if _, exists := m.files[key]; !exists {
-		return "", fmt.Errorf("file not found: %s", key)
-	}
-
+// For testing purposes, always returns a URL regardless of file existence
+func (m *MockStorage) GetPresignedURL(ctx context.Context, key string, expiry time.Duration) (string, error) {
+	// Don't check existence - tests don't always populate storage with actual files
 	return fmt.Sprintf("http://mock-storage/download/%s", key), nil
 }
 
 // Exists checks if a file exists in mock storage
-func (m *MockStorage) Exists(key string) bool {
+func (m *MockStorage) Exists(ctx context.Context, key string) bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
