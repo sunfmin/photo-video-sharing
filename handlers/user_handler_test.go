@@ -8,7 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/yourorg/photo-video-sharing/handlers"
 	"github.com/yourorg/photo-video-sharing/services"
@@ -120,14 +122,22 @@ func TestUserHandler_Register(t *testing.T) {
 					t.Fatalf("Failed to decode response: %v", err)
 				}
 
-				if resp.User == nil {
-					t.Fatal("Expected user in response, got nil")
+				// Principle V: Build expected from fixtures, copy only random fields (ID, timestamps)
+				expected := &pb.RegisterResponse{
+					User: &pb.User{
+						Id:           resp.User.Id,           // Random UUID - from response
+						Email:        tt.email,               // From request fixture
+						StorageUsed:  0,                      // Default value
+						StorageQuota: 524288000,              // Default from fixtures
+						CreatedAt:    resp.User.CreatedAt,   // Timestamp - from response
+						UpdatedAt:    resp.User.UpdatedAt,   // Timestamp - from response
+					},
+					SessionId: resp.SessionId, // Random UUID - from response
 				}
-				if resp.User.Email != tt.email {
-					t.Errorf("Expected email %s, got %s", tt.email, resp.User.Email)
-				}
-				if resp.SessionId == "" {
-					t.Error("Expected session ID for auto-login, got empty")
+
+				// Principle V: Use cmp.Diff with protocmp.Transform
+				if diff := cmp.Diff(expected, &resp, protocmp.Transform()); diff != "" {
+					t.Errorf("Response mismatch (-want +got):\n%s", diff)
 				}
 
 				// Verify session cookie is set
@@ -249,11 +259,17 @@ func TestUserHandler_Login(t *testing.T) {
 					t.Fatalf("Failed to decode response: %v", err)
 				}
 
+				// Principle V: Build expected from fixtures, copy only random fields
+				// Note: We don't check User details here, just that login succeeded
+				// User data is tested in Register test
 				if resp.User == nil {
 					t.Fatal("Expected user in response")
 				}
+				if resp.User.Email != "user@example.com" { // From fixture
+					t.Errorf("Expected email user@example.com, got %s", resp.User.Email)
+				}
 				if resp.SessionId == "" {
-					t.Error("Expected session ID")
+					t.Error("Expected session ID (random UUID)")
 				}
 
 				// Verify session cookie

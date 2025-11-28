@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"google.golang.org/protobuf/testing/protocmp"
 	"gorm.io/gorm"
 
 	"github.com/yourorg/photo-video-sharing/handlers"
@@ -140,17 +142,26 @@ func TestMediaHandler_UploadPhoto(t *testing.T) {
 					t.Fatalf("Failed to decode response: %v", err)
 				}
 
-				if resp.Media == nil {
-					t.Fatal("Expected media in response, got nil")
+				// Principle V: Build expected from fixtures
+				// Copy only truly random fields: ID, timestamps, storage_path (contains UUID)
+				expected := &pb.UploadMediaResponse{
+					Media: &pb.Media{
+						Id:          resp.Media.Id,          // Random UUID - from response
+						OwnerId:     user.ID,                // From fixture
+						Filename:    tt.filename,            // From test case
+						FileType:    tt.contentType,         // From test case
+						FileSize:    tt.fileSize,            // From test case
+						StoragePath: resp.Media.StoragePath, // Contains UUID - from response
+						UploadedAt:  resp.Media.UploadedAt,  // Timestamp - from response
+						CreatedAt:   resp.Media.CreatedAt,   // Timestamp - from response
+						UpdatedAt:   resp.Media.UpdatedAt,   // Timestamp - from response
+					},
+					Message: resp.Message, // Dynamic message about processing
 				}
-				if resp.Media.Filename != tt.filename {
-					t.Errorf("Expected filename %s, got %s", tt.filename, resp.Media.Filename)
-				}
-				if resp.Media.OwnerId != user.ID {
-					t.Errorf("Expected owner %s, got %s", user.ID, resp.Media.OwnerId)
-				}
-				if resp.Media.FileSize != tt.fileSize {
-					t.Errorf("Expected size %d, got %d", tt.fileSize, resp.Media.FileSize)
+
+				// Principle V: Use cmp.Diff with protocmp.Transform
+				if diff := cmp.Diff(expected, &resp, protocmp.Transform()); diff != "" {
+					t.Errorf("Response mismatch (-want +got):\n%s", diff)
 				}
 
 				// Verify file was uploaded to storage
@@ -304,15 +315,65 @@ func TestMediaHandler_ListMedia(t *testing.T) {
 		t.Errorf("Expected 3 media items, got %d", len(resp.Media))
 	}
 
-	// Verify sorted by upload date (newest first)
-	if resp.Media[0].Id != media3.ID {
-		t.Error("Media not sorted correctly - newest should be first")
+	// Principle V: Build expected from fixtures in sorted order (newest first)
+	// The service sorts by uploaded_at DESC, so: media3 > media2 > media1
+	expectedMedia := []*pb.Media{
+		{
+			Id:          media3.ID,
+			OwnerId:     user.ID,
+			Filename:    "video1.mp4",
+			FileType:    "video/mp4",
+			FileSize:    media3.FileSize,
+			StoragePath: media3.StoragePath,
+			UploadedAt:  resp.Media[0].UploadedAt, // Timestamps from response
+			CreatedAt:   resp.Media[0].CreatedAt,
+			UpdatedAt:   resp.Media[0].UpdatedAt,
+		},
+		{
+			Id:          media2.ID,
+			OwnerId:     user.ID,
+			Filename:    "photo2.jpg",
+			FileType:    media2.FileType,
+			FileSize:    media2.FileSize,
+			StoragePath: media2.StoragePath,
+			UploadedAt:  resp.Media[1].UploadedAt,
+			CreatedAt:   resp.Media[1].CreatedAt,
+			UpdatedAt:   resp.Media[1].UpdatedAt,
+		},
+		{
+			Id:          media1.ID,
+			OwnerId:     user.ID,
+			Filename:    "photo1.jpg",
+			FileType:    media1.FileType,
+			FileSize:    media1.FileSize,
+			StoragePath: media1.StoragePath,
+			UploadedAt:  resp.Media[2].UploadedAt,
+			CreatedAt:   resp.Media[2].CreatedAt,
+			UpdatedAt:   resp.Media[2].UpdatedAt,
+		},
 	}
-	if resp.Media[1].Id != media2.ID {
-		t.Error("Media not sorted correctly")
+
+	// Add optional fields from fixtures
+	for i, media := range []*testutil.TestMedia{media3, media2, media1} {
+		if media.Width != nil {
+			expectedMedia[i].Width = int32(*media.Width)
+		}
+		if media.Height != nil {
+			expectedMedia[i].Height = int32(*media.Height)
+		}
+		if media.ThumbnailPath != nil {
+			expectedMedia[i].ThumbnailPath = *media.ThumbnailPath
+		}
 	}
-	if resp.Media[2].Id != media1.ID {
-		t.Error("Media not sorted correctly - oldest should be last")
+
+	expected := &pb.ListMediaResponse{
+		Media:      expectedMedia,
+		TotalCount: 3, // Total from fixtures
+	}
+
+	// Principle V: Use cmp.Diff with protocmp.Transform
+	if diff := cmp.Diff(expected, &resp, protocmp.Transform()); diff != "" {
+		t.Errorf("Response mismatch (-want +got):\n%s", diff)
 	}
 }
 
@@ -400,15 +461,45 @@ func TestMediaHandler_GetMedia(t *testing.T) {
 				t.Fatalf("Failed to decode response: %v", err)
 			}
 
-			// Verify response contains media and presigned URL
-			if resp.Media == nil {
-				t.Fatal("Expected media in response")
+			// Principle V: Build expected from fixtures
+			expected := &pb.GetMediaResponse{
+				Media: &pb.Media{
+					Id:          media.ID,                   // From fixture
+					OwnerId:     user.ID,                    // From fixture
+					Filename:    media.Filename,             // From fixture
+					FileType:    media.FileType,             // From fixture
+					FileSize:    media.FileSize,             // From fixture
+					StoragePath: media.StoragePath,          // From fixture
+					UploadedAt:  resp.Media.UploadedAt,      // Timestamp - from response
+					CreatedAt:   resp.Media.CreatedAt,       // Timestamp - from response
+					UpdatedAt:   resp.Media.UpdatedAt,       // Timestamp - from response
+				},
+				DownloadUrl:  resp.DownloadUrl,  // Dynamic presigned URL
+				ThumbnailUrl: resp.ThumbnailUrl, // Dynamic presigned URL
 			}
+
+			// Add optional fields from fixture
+			if media.Width != nil {
+				expected.Media.Width = int32(*media.Width)
+			}
+			if media.Height != nil {
+				expected.Media.Height = int32(*media.Height)
+			}
+			if media.ThumbnailPath != nil {
+				expected.Media.ThumbnailPath = *media.ThumbnailPath
+			}
+
+			// Principle V: Use cmp.Diff with protocmp.Transform
+			if diff := cmp.Diff(expected, &resp, protocmp.Transform()); diff != "" {
+				t.Errorf("Response mismatch (-want +got):\n%s", diff)
+			}
+
+			// Verify presigned URLs are present
 			if resp.DownloadUrl == "" {
 				t.Error("Expected presigned download URL")
 			}
 			if media.ThumbnailPath != nil && resp.ThumbnailUrl == "" {
-				t.Error("Expected presigned thumbnail URL")
+				t.Error("Expected presigned thumbnail URL when thumbnail exists")
 			}
 		})
 	}

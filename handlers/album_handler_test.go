@@ -9,6 +9,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"google.golang.org/protobuf/testing/protocmp"
+
 	"github.com/yourorg/photo-video-sharing/handlers"
 	"github.com/yourorg/photo-video-sharing/services"
 	"github.com/yourorg/photo-video-sharing/testutil"
@@ -105,14 +108,22 @@ func TestAlbumHandler_Create(t *testing.T) {
 					t.Fatalf("Failed to decode response: %v", err)
 				}
 
-				if resp.Album == nil {
-					t.Fatal("Expected album in response")
+				// Principle V: Build expected from fixtures, copy only random fields
+				expected := &pb.CreateAlbumResponse{
+					Album: &pb.Album{
+						Id:          resp.Album.Id,          // Random UUID - from response
+						OwnerId:     user.ID,                // From fixture
+						Name:        tt.albumName,           // From test case
+						Description: tt.description,         // From test case
+						MediaCount:  0,                      // No media added yet
+						CreatedAt:   resp.Album.CreatedAt,   // Timestamp - from response
+						UpdatedAt:   resp.Album.UpdatedAt,   // Timestamp - from response
+					},
 				}
-				if resp.Album.Name != tt.albumName {
-					t.Errorf("Expected name %s, got %s", tt.albumName, resp.Album.Name)
-				}
-				if resp.Album.OwnerId != user.ID {
-					t.Errorf("Expected owner %s, got %s", user.ID, resp.Album.OwnerId)
+
+				// Principle V: Use cmp.Diff with protocmp.Transform
+				if diff := cmp.Diff(expected, &resp, protocmp.Transform()); diff != "" {
+					t.Errorf("Response mismatch (-want +got):\n%s", diff)
 				}
 			}
 
@@ -184,8 +195,15 @@ func TestAlbumHandler_AddMedia(t *testing.T) {
 		t.Fatalf("Failed to decode response: %v", err)
 	}
 
-	if resp.AddedCount != 1 {
-		t.Errorf("Expected 1 media added, got %d", resp.AddedCount)
+	// Principle V: Build expected from fixtures
+	expected := &pb.AddMediaToAlbumResponse{
+		AddedCount: 1,      // 1 media added
+		Errors:     []string{}, // No errors expected
+	}
+
+	// Principle V: Use cmp.Diff with protocmp.Transform
+	if diff := cmp.Diff(expected, &resp, protocmp.Transform()); diff != "" {
+		t.Errorf("Response mismatch (-want +got):\n%s", diff)
 	}
 
 	// Verify media appears in album
