@@ -302,3 +302,98 @@ func TestAlbumHandler_RemoveMedia(t *testing.T) {
 	}
 }
 
+func TestAlbumHandler_ListAlbums(t *testing.T) {
+	t.Parallel()
+
+	// US4-AS4: View albums list with names, covers, and media count
+	db, cleanup := testutil.SetupTestDB(t)
+	defer cleanup()
+	defer testutil.TruncateTables(db, "album_media", "albums", "media", "users", "sessions")
+
+	if err := services.AutoMigrate(db); err != nil {
+		t.Fatalf("Failed to migrate: %v", err)
+	}
+
+	user := testutil.CreateTestUser(db, map[string]interface{}{
+		"email": "user@example.com",
+	})
+	session := testutil.CreateTestSession(db, user.ID, nil)
+
+	// Create albums with media
+	album1 := testutil.CreateTestAlbum(db, map[string]interface{}{
+		"owner_id": user.ID,
+		"name":     "Vacation 2025",
+	})
+	_ = testutil.CreateTestAlbum(db, map[string]interface{}{
+		"owner_id": user.ID,
+		"name":     "Family Photos",
+	})
+
+	// Add media to albums
+	media1 := testutil.CreateTestMedia(db, map[string]interface{}{
+		"owner_id": user.ID,
+	})
+	media2 := testutil.CreateTestMedia(db, map[string]interface{}{
+		"owner_id": user.ID,
+	})
+
+	db.Exec("INSERT INTO album_media (album_id, media_id, added_at) VALUES (?, ?, NOW())", album1.ID, media1.ID)
+	db.Exec("INSERT INTO album_media (album_id, media_id, added_at) VALUES (?, ?, NOW())", album1.ID, media2.ID)
+
+	userService := services.NewUserService(db).Build()
+	sessionService := services.NewSessionService(db).Build()
+	albumService := services.NewAlbumService(db).Build()
+
+	mux := handlers.SetupAlbumRoutes(userService, sessionService, albumService)
+
+	// Request albums list
+	req := httptest.NewRequest("GET", "/albums", nil)
+	req.AddCookie(&http.Cookie{
+		Name:  "session_id",
+		Value: session.ID,
+	})
+	rec := httptest.NewRecorder()
+
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d. Body: %s", rec.Code, rec.Body.String())
+	}
+
+	var resp pb.ListAlbumsResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("Failed to decode response: %v", err)
+	}
+
+	// Principle VIII: Verify acceptance scenario
+	// User should see:
+	// - Album names ✅
+	// - Cover thumbnails (TODO: implement cover_thumbnail_url)
+	// - Media count per album (TODO: implement media_count)
+
+	if len(resp.Albums) != 2 {
+		t.Errorf("Expected 2 albums, got %d", len(resp.Albums))
+	}
+
+	// Verify albums are present with correct names
+	albumNames := make(map[string]bool)
+	for _, album := range resp.Albums {
+		albumNames[album.Name] = true
+		
+		// Verify owner is correct
+		if album.OwnerId != user.ID {
+			t.Errorf("Album %s has wrong owner", album.Name)
+		}
+	}
+
+	if !albumNames["Vacation 2025"] {
+		t.Error("Expected 'Vacation 2025' album in list")
+	}
+	if !albumNames["Family Photos"] {
+		t.Error("Expected 'Family Photos' album in list")
+	}
+
+	// Note: media_count and cover_thumbnail_url would be verified here
+	// once those features are fully implemented in the service
+}
+

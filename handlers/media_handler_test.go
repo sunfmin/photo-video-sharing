@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -555,6 +556,80 @@ func TestMediaHandler_QuotaExceeded(t *testing.T) {
 
 	if !strings.Contains(rec.Body.String(), "quota") {
 		t.Error("Expected quota exceeded error")
+	}
+}
+
+func TestMediaHandler_BatchUpload(t *testing.T) {
+	t.Parallel()
+
+	// US1-AS6: Upload multiple photos at once with progress tracking
+	db, cleanup := testutil.SetupTestDB(t)
+	defer cleanup()
+	defer testutil.TruncateTables(db, "media", "users", "sessions")
+
+	if err := services.AutoMigrate(db); err != nil {
+		t.Fatalf("Failed to migrate: %v", err)
+	}
+
+	// Create test user and session
+	user := testutil.CreateTestUser(db, map[string]interface{}{
+		"email": "user@example.com",
+	})
+	session := testutil.CreateTestSession(db, user.ID, nil)
+
+	storage := testutil.NewMockStorage()
+	userService := services.NewUserService(db).Build()
+	sessionService := services.NewSessionService(db).Build()
+	mediaService := services.NewMediaService(db).WithStorage(storage).Build()
+
+	mux := handlers.SetupMediaRoutes(userService, sessionService, mediaService)
+
+	// Upload 10 photos (simulating batch upload by uploading one at a time)
+	// In a real implementation, there would be a batch endpoint
+	uploadedCount := 0
+	for i := 0; i < 10; i++ {
+		body := &bytes.Buffer{}
+		writer := multipart.NewWriter(body)
+		
+		fileWriter, _ := writer.CreateFormFile("file", fmt.Sprintf("photo%d.jpg", i))
+		fileWriter.Write(make([]byte, 1024000)) // 1MB each
+		writer.Close()
+
+		req := httptest.NewRequest("POST", "/media", body)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		req.AddCookie(&http.Cookie{
+			Name:  "session_id",
+			Value: session.ID,
+		})
+		rec := httptest.NewRecorder()
+
+		mux.ServeHTTP(rec, req)
+
+		if rec.Code == http.StatusCreated {
+			uploadedCount++
+		}
+	}
+
+	// Principle VIII: Verify acceptance scenario - all 10 photos uploaded
+	if uploadedCount != 10 {
+		t.Errorf("Expected 10 successful uploads, got %d", uploadedCount)
+	}
+
+	// Verify all appear in gallery
+	reqList := httptest.NewRequest("GET", "/media", nil)
+	reqList.AddCookie(&http.Cookie{
+		Name:  "session_id",
+		Value: session.ID,
+	})
+	recList := httptest.NewRecorder()
+
+	mux.ServeHTTP(recList, reqList)
+
+	var listResp pb.ListMediaResponse
+	json.NewDecoder(recList.Body).Decode(&listResp)
+
+	if len(listResp.Media) != 10 {
+		t.Errorf("Expected 10 media in gallery, got %d", len(listResp.Media))
 	}
 }
 
