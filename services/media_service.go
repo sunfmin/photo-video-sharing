@@ -174,6 +174,7 @@ func (s *mediaService) Upload(ctx context.Context, req *pb.UploadMediaRequest, f
 }
 
 // Get retrieves a media item with presigned URLs
+// Supports access by owner OR users with whom media is shared
 func (s *mediaService) Get(ctx context.Context, req *pb.GetMediaRequest, userID string) (*pb.GetMediaResponse, error) {
 	// Principle XI: Create OpenTracing span
 	span, ctx := opentracing.StartSpanFromContext(ctx, "MediaService.Get")
@@ -181,9 +182,13 @@ func (s *mediaService) Get(ctx context.Context, req *pb.GetMediaRequest, userID 
 	span.SetTag("media_id", req.Id)
 	span.SetTag("user_id", userID)
 
-	// Fetch media (check ownership)
+	// Fetch media (check ownership OR shared access)
 	var media models.Media
-	if err := s.db.WithContext(ctx).Where("id = ? AND owner_id = ?", req.Id, userID).First(&media).Error; err != nil {
+	query := s.db.WithContext(ctx).
+		Joins("LEFT JOIN shares ON shares.media_id = media.id").
+		Where("media.id = ? AND (media.owner_id = ? OR shares.shared_with_user_id = ?)", req.Id, userID, userID)
+
+	if err := query.First(&media).Error; err != nil {
 		span.SetTag("error", true)
 		if err == gorm.ErrRecordNotFound {
 			return nil, fmt.Errorf("%w", ErrMediaNotFound)
@@ -266,7 +271,7 @@ func (s *mediaService) List(ctx context.Context, req *pb.ListMediaRequest, userI
 	}, nil
 }
 
-// Delete removes a media item
+// Delete removes a media item (owner only, not shared users)
 func (s *mediaService) Delete(ctx context.Context, req *pb.DeleteMediaRequest, userID string) (*pb.DeleteMediaResponse, error) {
 	// Principle XI: Create OpenTracing span
 	span, ctx := opentracing.StartSpanFromContext(ctx, "MediaService.Delete")
@@ -278,11 +283,16 @@ func (s *mediaService) Delete(ctx context.Context, req *pb.DeleteMediaRequest, u
 	tx := s.db.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	// Fetch media (check ownership)
+	// Fetch media (check ownership - only owner can delete, not shared users)
 	var media models.Media
 	if err := tx.Where("id = ? AND owner_id = ?", req.Id, userID).First(&media).Error; err != nil {
 		span.SetTag("error", true)
 		if err == gorm.ErrRecordNotFound {
+			// Check if user has shared access (to return appropriate error)
+			var shareExists models.Share
+			if tx.Where("media_id = ? AND shared_with_user_id = ?", req.Id, userID).First(&shareExists).Error == nil {
+				return nil, fmt.Errorf("%w: shared users cannot delete media", ErrUnauthorized)
+			}
 			return nil, fmt.Errorf("%w", ErrMediaNotFound)
 		}
 		return nil, fmt.Errorf("%w: %v", ErrDatabaseError, err)

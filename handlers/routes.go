@@ -21,7 +21,7 @@ func SetupRoutes(
 	userHandler := NewUserHandler(userService, sessionService)
 	mediaHandler := NewMediaHandler(nil) // Media service not initialized in auth-only setup
 	albumHandler := NewAlbumHandler(nil) // Album service not initialized in auth-only setup
-	shareHandler := NewShareHandler()
+	shareHandler := NewShareHandler(nil) // Share service not initialized in auth-only setup
 
 	// Health check
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +42,7 @@ func SetupRoutes(
 		mux.Handle("GET /media", authMiddleware.RequireAuth(http.HandlerFunc(mediaHandler.List)))
 		mux.Handle("GET /media/{id}", authMiddleware.RequireAuth(http.HandlerFunc(mediaHandler.Get)))
 		mux.Handle("DELETE /media/{id}", authMiddleware.RequireAuth(http.HandlerFunc(mediaHandler.Delete)))
-		mux.HandleFunc("GET /media/shared", mediaHandler.ListSharedWithMe)
+		// Note: /media/shared requires ShareService, added in SetupShareRoutes
 	}
 
 	// Album routes (protected) - only if album handler is initialized
@@ -58,13 +58,16 @@ func SetupRoutes(
 		mux.Handle("GET /albums/{id}/media", authMiddleware.RequireAuth(http.HandlerFunc(albumHandler.GetAlbumMedia)))
 	}
 
-	// Share routes (protected)
-	mux.HandleFunc("POST /shares/media", shareHandler.ShareMedia)
-	mux.HandleFunc("POST /shares/album", shareHandler.ShareAlbum)
-	mux.HandleFunc("DELETE /shares/{id}", shareHandler.RevokeShare)
-	mux.HandleFunc("GET /shares/media/{id}", shareHandler.ListMediaShares)
-	mux.HandleFunc("GET /shares/album/{id}", shareHandler.ListAlbumShares)
-	mux.HandleFunc("GET /albums/shared", shareHandler.ListSharedAlbums)
+	// Share routes (protected) - only if share handler is initialized
+	if shareHandler.shareService != nil {
+		authMiddleware := NewAuthMiddleware(sessionService)
+		mux.Handle("POST /shares/media", authMiddleware.RequireAuth(http.HandlerFunc(shareHandler.ShareMedia)))
+		mux.Handle("POST /shares/album", authMiddleware.RequireAuth(http.HandlerFunc(shareHandler.ShareAlbum)))
+		mux.Handle("DELETE /shares/{id}", authMiddleware.RequireAuth(http.HandlerFunc(shareHandler.RevokeShare)))
+		mux.Handle("GET /shares/media/{id}", authMiddleware.RequireAuth(http.HandlerFunc(shareHandler.ListMediaShares)))
+		mux.Handle("GET /shares/album/{id}", authMiddleware.RequireAuth(http.HandlerFunc(shareHandler.ListAlbumShares)))
+		mux.Handle("GET /albums/shared", authMiddleware.RequireAuth(http.HandlerFunc(shareHandler.ListSharedAlbums)))
+	}
 
 	return mux
 }
@@ -128,6 +131,42 @@ func SetupAlbumRoutes(
 	mux.Handle("POST /albums/{id}/media", authMiddleware.RequireAuth(http.HandlerFunc(albumHandler.AddMedia)))
 	mux.Handle("DELETE /albums/{id}/media", authMiddleware.RequireAuth(http.HandlerFunc(albumHandler.RemoveMedia)))
 	mux.Handle("GET /albums/{id}/media", authMiddleware.RequireAuth(http.HandlerFunc(albumHandler.GetAlbumMedia)))
+
+	return mux
+}
+
+// SetupShareRoutes is a helper for tests that need sharing routes
+// Principle IV: Shared routing configuration
+func SetupShareRoutes(
+	userService services.UserService,
+	sessionService services.SessionService,
+	mediaService services.MediaService,
+	shareService services.ShareService,
+) http.Handler {
+	mux := http.NewServeMux()
+
+	// Create handlers
+	mediaHandler := NewMediaHandler(mediaService)
+	shareHandler := NewShareHandler(shareService)
+	authMiddleware := NewAuthMiddleware(sessionService)
+
+	// Authentication routes
+	userHandler := NewUserHandler(userService, sessionService)
+	mux.HandleFunc("POST /auth/register", userHandler.Register)
+	mux.HandleFunc("POST /auth/login", userHandler.Login)
+
+	// Media routes (protected)
+	mux.Handle("GET /media/{id}", authMiddleware.RequireAuth(http.HandlerFunc(mediaHandler.Get)))
+	mux.Handle("DELETE /media/{id}", authMiddleware.RequireAuth(http.HandlerFunc(mediaHandler.Delete)))
+	mux.Handle("GET /media/shared", authMiddleware.RequireAuth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mediaHandler.ListSharedWithMe(w, r, shareService)
+	})))
+
+	// Share routes (protected)
+	mux.Handle("POST /shares/media", authMiddleware.RequireAuth(http.HandlerFunc(shareHandler.ShareMedia)))
+	mux.Handle("POST /shares/album", authMiddleware.RequireAuth(http.HandlerFunc(shareHandler.ShareAlbum)))
+	mux.Handle("DELETE /shares/{id}", authMiddleware.RequireAuth(http.HandlerFunc(shareHandler.RevokeShare)))
+	mux.Handle("GET /shares/media/{id}", authMiddleware.RequireAuth(http.HandlerFunc(shareHandler.ListMediaShares)))
 
 	return mux
 }

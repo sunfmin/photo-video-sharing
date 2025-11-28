@@ -210,9 +210,28 @@ func (h *MediaHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, resp)
 }
 
-// ListSharedWithMe lists media shared with current user (stub for now)
-func (h *MediaHandler) ListSharedWithMe(w http.ResponseWriter, r *http.Request) {
-	WriteError(w, http.StatusNotImplemented, "Not implemented yet - will be added in US3 (Sharing)")
+// ListSharedWithMe lists media shared with current user
+func (h *MediaHandler) ListSharedWithMe(w http.ResponseWriter, r *http.Request, shareService services.ShareService) {
+	span := h.tracer.StartSpan("GET /media/shared")
+	defer span.Finish()
+
+	ctx := r.Context()
+	userID, ok := ctx.Value("user_id").(string)
+	if !ok {
+		span.SetTag("error", true)
+		WriteError(w, http.StatusUnauthorized, "Authentication required")
+		return
+	}
+
+	resp, err := shareService.ListSharedWithMe(ctx, &pb.ListSharedWithMeRequest{}, userID)
+	if err != nil {
+		span.SetTag("error", true)
+		HandleServiceError(w, err)
+		return
+	}
+
+	span.SetTag("http.status_code", http.StatusOK)
+	WriteJSON(w, http.StatusOK, resp)
 }
 
 // Helper function to detect MIME type from filename extension
